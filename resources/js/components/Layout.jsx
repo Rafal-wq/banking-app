@@ -1,4 +1,4 @@
-import { Link } from "react-router-dom";
+import { NavLink } from "react-router-dom";
 
 export default function Layout({ children }) {
     return (
@@ -6,9 +6,18 @@ export default function Layout({ children }) {
             <nav style={styles.navbar}>
                 <h2>My App</h2>
                 <ul style={styles.navList}>
-                    <li><Link to="/">Home</Link></li>
-                    <li><Link to="/user/1">User 1</Link></li>
-                    <li><Link to="/user/2">User 2</Link></li>
+                    <li>
+                        <NavLink to="/" style={getActiveStyle}>Home</NavLink>
+                    </li>
+                    <li>
+                        <NavLink to="/user/1" style={getActiveStyle}>User 1</NavLink>
+                    </li>
+                    <li>
+                        <NavLink to="/user/2" style={getActiveStyle}>User 2</NavLink>
+                    </li>
+                    <li>
+                        <NavLink to="/register" style={getActiveStyle}>Register</NavLink>
+                    </li>
                 </ul>
             </nav>
 
@@ -16,6 +25,12 @@ export default function Layout({ children }) {
         </div>
     );
 }
+
+const getActiveStyle = ({ isActive }) => ({
+    color: isActive ? "yellow" : "white",
+    textDecoration: "none",
+    fontWeight: isActive ? "bold" : "normal"
+});
 
 const styles = {
     navbar: {

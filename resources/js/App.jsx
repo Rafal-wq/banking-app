@@ -1,19 +1,25 @@
-import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
-import Home from "./pages/Home";
-import User from "./pages/User";
-import Layout from "./components/Layout"; // Importujemy layout
+import '../css/app.css';
+import './bootstrap';
 
-function App() {
-    return (
-        <Router>
-            <Layout>
-                <Routes>
-                    <Route path="/" element={<Home />} />
-                    <Route path="/user/:id" element={<User />} />
-                </Routes>
-            </Layout>
-        </Router>
-    );
-}
+import { createInertiaApp } from '@inertiajs/react';
+import { resolvePageComponent } from 'laravel-vite-plugin/inertia-helpers';
+import { createRoot } from 'react-dom/client';
 
-export default App;
+const appName = import.meta.env.VITE_APP_NAME || 'Laravel';
+
+createInertiaApp({
+    title: (title) => `${title} - ${appName}`,
+    resolve: (name) =>
+        resolvePageComponent(
+            `./Pages/${name}.jsx`,
+            import.meta.glob('./Pages/**/*.jsx'),
+        ),
+    setup({ el, App, props }) {
+        const root = createRoot(el);
+
+        root.render(<App {...props} />);
+    },
+    progress: {
+        color: '#4B5563',
+    },
+});
