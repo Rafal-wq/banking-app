@@ -16,9 +16,15 @@ class BankAccountController extends Controller
      */
     public function index(Request $request)
     {
+        if (!$request->user()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Unauthorized',
+            ], 401);
+        }
+
         $user = $request->user();
 
-        // Using cache to improve performance
         $cacheKey = 'user.'.$user->id.'.accounts';
         $accounts = Cache::remember($cacheKey, now()->addMinutes(5), function () use ($user) {
             return $user->bankAccounts()->with(['incomingTransactions', 'outgoingTransactions'])->get();
