@@ -1,122 +1,133 @@
-import React, { useState, useEffect } from 'react';
-import { Link, useForm, router } from '@inertiajs/react';
-import TextInput from '@/components/TextInput';
+import React, { useState } from 'react';
+import { Head } from '@inertiajs/react';
 import InputLabel from '@/components/InputLabel';
-import PrimaryButton from '@/components/PrimaryButton';
+import TextInput from '@/components/TextInput';
 import InputError from '@/components/InputError';
+import PrimaryButton from '@/components/PrimaryButton';
+import { Link } from '@inertiajs/react';
+import axios from 'axios';
 
 export default function Login() {
-    const { data, setData, post, processing, errors, reset } = useForm({
+    const [formData, setFormData] = useState({
         email: '',
         password: '',
         remember: false,
     });
 
-    const [status, setStatus] = useState(null);
+    const [processing, setProcessing] = useState(false);
+    const [errors, setErrors] = useState({});
+    const [generalError, setGeneralError] = useState('');
 
-    useEffect(() => {
-        return () => {
-            reset('password');
-        };
-    }, []);
-
-    const handleSubmit = (e) => {
-        e.preventDefault();
-
-        post('/login', {
-            onSuccess: () => {
-            },
-            onError: (errors) => {
-                if (errors.email || errors.password) {
-                    setStatus('Nieprawidłowe dane logowania.');
-                } else {
-                    setStatus('Wystąpił błąd podczas logowania.');
-                }
-            },
-        });
+    const handleChange = (e) => {
+        const { name, value, checked, type } = e.target;
+        setFormData(prevState => ({
+            ...prevState,
+            [name]: type === 'checkbox' ? checked : value
+        }));
     };
 
+    async function handleSubmit(e) {
+        e.preventDefault();
+        setProcessing(true);
+        setErrors({});
+        setGeneralError('');
+
+        try {
+            const response = await axios.post('/login', formData, {
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            });
+
+            if (response.data.token) {
+                localStorage.setItem('auth_token', response.data.token);
+                localStorage.setItem('user', JSON.stringify(response.data.user));
+                window.location.href = '/dashboard';
+            }
+        } catch (error) {
+            if (error.response && error.response.data.errors) {
+                setErrors(error.response.data.errors);
+            } else {
+                setGeneralError('Wystąpił błąd podczas logowania. Spróbuj ponownie.');
+            }
+            setProcessing(false);
+        }
+    }
+
     return (
-        <div className="min-h-screen flex flex-col sm:justify-center items-center pt-6 sm:pt-0 bg-gray-100">
-            <div className="w-full sm:max-w-md mt-6 px-6 py-4 bg-white shadow-md overflow-hidden sm:rounded-lg">
-                <h1 className="text-2xl font-bold text-center mb-6 text-gray-800">Logowanie</h1>
+        <>
+            <Head title="Logowanie" />
 
-                {status && (
-                    <div className="mb-4 p-4 bg-red-100 border-l-4 border-red-500 text-red-700">
-                        <p>{status}</p>
-                    </div>
-                )}
+            <div className="min-h-screen flex flex-col sm:justify-center items-center pt-6 sm:pt-0 bg-gray-100">
+                <div className="w-full sm:max-w-md mt-6 px-6 py-4 bg-white shadow-md overflow-hidden sm:rounded-lg">
+                    <h1 className="text-2xl font-bold text-center mb-6">Logowanie</h1>
 
-                <form onSubmit={handleSubmit}>
-                    <div className="mb-4">
-                        <InputLabel htmlFor="email" value="Email" />
-                        <TextInput
-                            id="email"
-                            type="email"
-                            name="email"
-                            value={data.email}
-                            onChange={(e) => setData('email', e.target.value)}
-                            className="mt-1 block w-full"
-                            autoComplete="username"
-                            required
-                        />
-                        {errors.email && <InputError message={errors.email} className="mt-2" />}
-                    </div>
+                    {generalError && (
+                        <div className="mb-4 p-2 bg-red-100 text-red-700 rounded">
+                            {generalError}
+                        </div>
+                    )}
 
-                    <div className="mb-4">
-                        <InputLabel htmlFor="password" value="Hasło" />
-                        <TextInput
-                            id="password"
-                            type="password"
-                            name="password"
-                            value={data.password}
-                            onChange={(e) => setData('password', e.target.value)}
-                            className="mt-1 block w-full"
-                            autoComplete="current-password"
-                            required
-                        />
-                        {errors.password && <InputError message={errors.password} className="mt-2" />}
-                    </div>
-
-                    <div className="block mb-4">
-                        <label className="flex items-center">
-                            <input
-                                type="checkbox"
-                                name="remember"
-                                checked={data.remember}
-                                onChange={(e) => setData('remember', e.target.checked)}
-                                className="rounded border-gray-300 text-blue-600 shadow-sm focus:ring-blue-500"
+                    <form onSubmit={handleSubmit}>
+                        <div>
+                            <InputLabel htmlFor="email" value="Email" />
+                            <TextInput
+                                id="email"
+                                type="email"
+                                name="email"
+                                value={formData.email}
+                                className="mt-1 block w-full"
+                                autoComplete="username"
+                                autoFocus
+                                onChange={handleChange}
                             />
-                            <span className="ml-2 text-sm text-gray-600">Zapamiętaj mnie</span>
-                        </label>
-                    </div>
+                            <InputError message={errors.email} className="mt-2" />
+                        </div>
 
-                    <div className="flex items-center justify-between mt-6">
-                        <Link
-                            href={route('password.request')}
-                            className="text-sm text-gray-600 hover:text-gray-900 underline rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-                        >
-                            Zapomniałeś hasła?
-                        </Link>
+                        <div className="mt-4">
+                            <InputLabel htmlFor="password" value="Hasło" />
+                            <TextInput
+                                id="password"
+                                type="password"
+                                name="password"
+                                value={formData.password}
+                                className="mt-1 block w-full"
+                                autoComplete="current-password"
+                                onChange={handleChange}
+                            />
+                            <InputError message={errors.password} className="mt-2" />
+                        </div>
 
-                        <PrimaryButton type="submit" className="ml-4" disabled={processing}>
-                            {processing ? 'Logowanie...' : 'Zaloguj się'}
-                        </PrimaryButton>
-                    </div>
-                </form>
+                        <div className="block mt-4">
+                            <label className="flex items-center">
+                                <input
+                                    type="checkbox"
+                                    name="remember"
+                                    checked={formData.remember}
+                                    onChange={handleChange}
+                                    className="rounded border-gray-300 text-indigo-600 shadow-sm focus:ring-indigo-500"
+                                />
+                                <span className="ml-2 text-sm text-gray-600">Zapamiętaj mnie</span>
+                            </label>
+                        </div>
 
-                <div className="mt-6 text-center">
-                    <p className="text-sm text-gray-600">
-                        Nie masz konta?{' '}
-                        <Link
-                            href={route('register')}
-                            className="text-blue-600 hover:text-blue-900 underline"
-                        >
-                            Zarejestruj się
-                        </Link>
-                    </p>
+                        <div className="flex items-center justify-end mt-4">
+                            <Link
+                                href="/forgot-password"
+                                className="underline text-sm text-gray-600 hover:text-gray-900 rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                            >
+                                Zapomniałeś hasła?
+                            </Link>
+
+                            <PrimaryButton className="ml-4" disabled={processing}>
+                                {processing ? 'Logowanie...' : 'Zaloguj'}
+                            </PrimaryButton>
+                        </div>
+                    </form>
                 </div>
             </div>
-        </div>
+        </>
     );
 }

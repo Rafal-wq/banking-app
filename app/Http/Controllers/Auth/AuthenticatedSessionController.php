@@ -4,43 +4,52 @@ namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Auth\LoginRequest;
-use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
-use Inertia\Response;
 
 class AuthenticatedSessionController extends Controller
 {
-    /**
-     * Display the login view.
-     */
-    public function create(): Response
+    public function create()
     {
-        return Inertia::render('Auth/Login', [
-            'canResetPassword' => Route::has('password.request'),
-            'status' => session('status'),
-        ]);
+        return Inertia::render('Auth/Login');
     }
 
-    /**
-     * Handle an incoming authentication request.
-     */
-    public function store(LoginRequest $request): RedirectResponse
+    public function store(LoginRequest $request)
     {
         $request->authenticate();
 
         $request->session()->regenerate();
 
+        $token = Auth::user()->createToken('api-token')->plainTextToken;
+
+        if ($request->wantsJson()) {
+            return response()->json([
+                'success' => true,
+                'token' => $token,
+                'user' => Auth::user()
+            ]);
+        }
+
         return redirect()->intended(route('dashboard', absolute: false));
     }
 
-    /**
-     * Destroy an authenticated session.
-     */
-    public function destroy(Request $request): RedirectResponse
+    public function destroy(Request $request)
     {
+        if ($request->wantsJson()) {
+            if (Auth::user()) {
+                Auth::user()->tokens()->delete();
+            }
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Logged out successfully.'
+            ]);
+        }
+
         Auth::guard('web')->logout();
 
         $request->session()->invalidate();

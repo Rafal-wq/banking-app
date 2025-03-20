@@ -1,22 +1,72 @@
 import React, { useState } from 'react';
-import { Link, useForm } from '@inertiajs/react';
+import { Link, router } from '@inertiajs/react';
+import axios from 'axios';
 
 export default function CreateAccount() {
-    const { data, setData, post, processing, errors } = useForm({
+    const [formData, setFormData] = useState({
         name: '',
         currency: 'PLN',
     });
 
+    const [processing, setProcessing] = useState(false);
+    const [errors, setErrors] = useState({});
     const [success, setSuccess] = useState(false);
+    const [message, setMessage] = useState('');
 
-    const handleSubmit = (e) => {
+    const handleChange = (e) => {
+        const { name, value } = e.target;
+        setFormData(prevState => ({
+            ...prevState,
+            [name]: value
+        }));
+    };
+
+    const handleSubmit = async (e) => {
         e.preventDefault();
+        setProcessing(true);
+        setErrors({});
 
-        post('/api/bank-accounts', {
-            onSuccess: () => {
+        try {
+            await axios.get('/sanctum/csrf-cookie');
+
+            const response = await axios.post('/api/bank-accounts', formData, {
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                withCredentials: true
+            });
+
+            if (response.data.success) {
                 setSuccess(true);
-            },
+                setMessage(response.data.message || 'Konto zostało pomyślnie utworzone!');
+            }
+        } catch (error) {
+            console.error('Error creating account:', error);
+
+            if (error.response) {
+                if (error.response.data && error.response.data.errors) {
+                    setErrors(error.response.data.errors);
+                } else {
+                    setMessage(error.response.data.message || 'Wystąpił błąd podczas tworzenia konta.');
+                }
+            } else {
+                setMessage('Nie można nawiązać połączenia z serwerem.');
+            }
+        } finally {
+            setProcessing(false);
+        }
+    };
+
+    const resetForm = () => {
+        setFormData({
+            name: '',
+            currency: 'PLN',
         });
+        setSuccess(false);
+        setMessage('');
+        setErrors({});
     };
 
     const currencies = [
@@ -39,7 +89,7 @@ export default function CreateAccount() {
             {success ? (
                 <div className="bg-green-100 p-6 rounded-lg shadow mb-6">
                     <h2 className="text-xl text-green-800 font-semibold mb-2">Konto zostało utworzone!</h2>
-                    <p className="mb-4">Twoje nowe konto bankowe zostało pomyślnie utworzone.</p>
+                    <p className="mb-4">{message || 'Twoje nowe konto bankowe zostało pomyślnie utworzone.'}</p>
                     <div className="flex space-x-4">
                         <Link
                             href="/dashboard"
@@ -48,10 +98,7 @@ export default function CreateAccount() {
                             Powrót do dashboardu
                         </Link>
                         <button
-                            onClick={() => {
-                                setData({ name: '', currency: 'PLN' });
-                                setSuccess(false);
-                            }}
+                            onClick={resetForm}
                             className="px-4 py-2 bg-gray-500 text-white rounded hover:bg-gray-600 transition"
                         >
                             Utwórz kolejne konto
@@ -60,6 +107,12 @@ export default function CreateAccount() {
                 </div>
             ) : (
                 <div className="bg-white p-6 rounded-lg shadow">
+                    {message && (
+                        <div className="bg-red-100 p-4 rounded mb-4 text-red-700">
+                            {message}
+                        </div>
+                    )}
+
                     <form onSubmit={handleSubmit}>
                         <div className="mb-4">
                             <label className="block text-gray-700 font-medium mb-2" htmlFor="name">
@@ -68,8 +121,9 @@ export default function CreateAccount() {
                             <input
                                 type="text"
                                 id="name"
-                                value={data.name}
-                                onChange={(e) => setData('name', e.target.value)}
+                                name="name"
+                                value={formData.name}
+                                onChange={handleChange}
                                 className="w-full p-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
                                 placeholder="np. Konto osobiste, Oszczędności, Wakacje"
                                 required
@@ -83,8 +137,9 @@ export default function CreateAccount() {
                             </label>
                             <select
                                 id="currency"
-                                value={data.currency}
-                                onChange={(e) => setData('currency', e.target.value)}
+                                name="currency"
+                                value={formData.currency}
+                                onChange={handleChange}
                                 className="w-full p-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
                                 required
                             >

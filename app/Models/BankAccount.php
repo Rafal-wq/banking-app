@@ -60,15 +60,6 @@ class BankAccount extends Model
     }
 
     /**
-     * Get all transactions for the bank account (both incoming and outgoing).
-     */
-    public function transactions()
-    {
-        return Transaction::where('from_account_id', $this->id)
-            ->orWhere('to_account_id', $this->id);
-    }
-
-    /**
      * Generate a unique account number.
      */
     public static function generateAccountNumber(): string

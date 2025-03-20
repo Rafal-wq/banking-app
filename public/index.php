@@ -1,5 +1,11 @@
 <?php
 
+file_put_contents(
+    __DIR__.'/../storage/logs/requests.log',
+    date('Y-m-d H:i:s').' - '.$_SERVER['REQUEST_METHOD'].' '.$_SERVER['REQUEST_URI'].PHP_EOL,
+    FILE_APPEND
+);
+
 use Illuminate\Foundation\Application;
 use Illuminate\Http\Request;
 

@@ -5,7 +5,6 @@ namespace App\Http\Controllers;
 use App\Models\BankAccount;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
 
@@ -14,32 +13,38 @@ class BankAccountController extends Controller
     /**
      * Display a listing of the user's bank accounts.
      */
-    public function index(Request $request)
+    public function index(Request $request): \Illuminate\Http\JsonResponse
     {
-        if (!$request->user()) {
+
+        $user = auth()->user();
+
+        if (!$user) {
             return response()->json([
                 'success' => false,
-                'message' => 'Unauthorized',
+                'message' => 'Unauthenticated.',
             ], 401);
         }
 
-        $user = $request->user();
+        // Sprawdź, czy relacja istnieje
+        try {
+            $accounts = $user->bankAccounts()->with(['incomingTransactions', 'outgoingTransactions'])->get();
 
-        $cacheKey = 'user.'.$user->id.'.accounts';
-        $accounts = Cache::remember($cacheKey, now()->addMinutes(5), function () use ($user) {
-            return $user->bankAccounts()->with(['incomingTransactions', 'outgoingTransactions'])->get();
-        });
-
-        return response()->json([
-            'success' => true,
-            'data' => $accounts,
-        ]);
+            return response()->json([
+                'success' => true,
+                'data' => $accounts,
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error: ' . $e->getMessage(),
+            ], 500);
+        }
     }
 
     /**
      * Store a newly created bank account in storage.
      */
-    public function store(Request $request)
+    public function store(Request $request): \Illuminate\Http\JsonResponse
     {
         $validator = Validator::make($request->all(), [
             'name' => 'required|string|max:255',
@@ -55,6 +60,7 @@ class BankAccountController extends Controller
 
         $user = $request->user();
 
+        // Generate a unique account number
         $accountNumber = BankAccount::generateAccountNumber();
 
         $account = BankAccount::create([
@@ -78,7 +84,7 @@ class BankAccountController extends Controller
     /**
      * Display the specified bank account.
      */
-    public function show(Request $request, BankAccount $bankAccount)
+    public function show(Request $request, BankAccount $bankAccount): \Illuminate\Http\JsonResponse
     {
         if ($request->user()->id !== $bankAccount->user_id) {
             return response()->json([
@@ -98,8 +104,9 @@ class BankAccountController extends Controller
     /**
      * Update the specified bank account in storage.
      */
-    public function update(Request $request, BankAccount $bankAccount)
+    public function update(Request $request, BankAccount $bankAccount): \Illuminate\Http\JsonResponse
     {
+        // Authorize that the account belongs to the authenticated user
         if ($request->user()->id !== $bankAccount->user_id) {
             return response()->json([
                 'success' => false,
@@ -121,7 +128,6 @@ class BankAccountController extends Controller
 
         $bankAccount->update($request->only(['name', 'is_active']));
 
-        // Clear the cache for this user's accounts
         Cache::forget('user.'.$request->user()->id.'.accounts');
 
         return response()->json([
@@ -136,7 +142,6 @@ class BankAccountController extends Controller
      */
     public function destroy(Request $request, BankAccount $bankAccount)
     {
-        // Authorize that the account belongs to the authenticated user
         if ($request->user()->id !== $bankAccount->user_id) {
             return response()->json([
                 'success' => false,
@@ -181,7 +186,6 @@ class BankAccountController extends Controller
      */
     public function deposit(Request $request, BankAccount $bankAccount)
     {
-        // Authorize that the account belongs to the authenticated user
         if ($request->user()->id !== $bankAccount->user_id) {
             return response()->json([
                 'success' => false,
@@ -204,7 +208,6 @@ class BankAccountController extends Controller
         $success = $bankAccount->deposit($amount);
 
         if ($success) {
-            // Clear the cache for this user's accounts
             Cache::forget('user.'.$request->user()->id.'.accounts');
 
             return response()->json([
@@ -225,7 +228,6 @@ class BankAccountController extends Controller
      */
     public function withdraw(Request $request, BankAccount $bankAccount)
     {
-        // Authorize that the account belongs to the authenticated user
         if ($request->user()->id !== $bankAccount->user_id) {
             return response()->json([
                 'success' => false,
