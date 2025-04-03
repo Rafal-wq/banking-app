@@ -1,24 +1,20 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from '@inertiajs/react';
 import axios from 'axios';
+import  { router } from '@inertiajs/react';
 
 export default function Dashboard() {
     const [accounts, setAccounts] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
 
-    const handleLogout = async () => {
-        try {
-            await axios.post('/api/logout');
-            localStorage.removeItem('auth_token');
-            localStorage.removeItem('user');
-            window.location.href = '/login';
-        } catch (error) {
-            console.error('Błąd wylogowania:', error);
-            localStorage.removeItem('auth_token');
-            localStorage.removeItem('user');
-            window.location.href = '/login';
-        }
+    const handleLogout = () => {
+        // Usuń token przed przekierowaniem
+        localStorage.removeItem('auth_token');
+        localStorage.removeItem('user');
+
+        // Przekieruj do istniejącej trasy wylogowania
+        window.location.href = '/logout-page';
     };
 
     const testAuthentication = async () => {
