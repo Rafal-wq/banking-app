@@ -1,120 +1,170 @@
-import InputError from '@/Components/InputError';
-import InputLabel from '@/Components/InputLabel';
-import PrimaryButton from '@/Components/PrimaryButton';
-import TextInput from '@/Components/TextInput';
-import GuestLayout from '@/Layouts/GuestLayout';
-import { Head, Link, useForm } from '@inertiajs/react';
+import { useState } from 'react';
+import { Head, Link } from '@inertiajs/react';
+import axios from 'axios';
 
 export default function Register() {
-    const { data, setData, post, processing, errors, reset } = useForm({
+    const [formData, setFormData] = useState({
         name: '',
         email: '',
         password: '',
-        password_confirmation: '',
+        password_confirmation: ''
     });
 
-    const submit = (e) => {
-        e.preventDefault();
+    const [errors, setErrors] = useState({});
+    const [processing, setProcessing] = useState(false);
 
-        post(route('register'), {
-            onFinish: () => reset('password', 'password_confirmation'),
-        });
+    const handleChange = (e) => {
+        const { name, value } = e.target;
+        setFormData(prevState => ({
+            ...prevState,
+            [name]: value
+        }));
+    };
+
+    const handleSubmit = async (e) => {
+        e.preventDefault();
+        setProcessing(true);
+        setErrors({});
+
+        try {
+            // Pobieramy CSRF token
+            await axios.get('/sanctum/csrf-cookie');
+
+            // Rejestracja użytkownika
+            const response = await axios.post('/register', formData);
+
+            // Zapisujemy token, jeśli istnieje w odpowiedzi
+            if (response.data && response.data.token) {
+                localStorage.setItem('auth_token', response.data.token);
+            }
+
+            // Bezpośrednie przekierowanie za pomocą window.location
+            window.location.replace('/dashboard');
+        } catch (error) {
+            setProcessing(false);
+            if (error.response && error.response.data && error.response.data.errors) {
+                setErrors(error.response.data.errors);
+            } else {
+                setErrors({ general: 'Wystąpił błąd podczas rejestracji. Spróbuj ponownie.' });
+            }
+        }
+    };
+
+    // Funkcja do powrotu na stronę główną
+    const goToHomePage = () => {
+        window.location.replace('/');
     };
 
     return (
-        <GuestLayout>
-            <Head title="Register" />
+        <>
+            <Head title="Rejestracja" />
 
-            <form onSubmit={submit}>
-                <div>
-                    <InputLabel htmlFor="name" value="Name" />
+            <div className="min-h-screen flex justify-center items-center bg-gray-100">
+                <div className="max-w-md w-full bg-white rounded-lg shadow-md overflow-hidden">
+                    <div className="p-6">
+                        <div className="flex justify-between items-center mb-4">
+                            <h1 className="text-2xl font-bold text-gray-800">Rejestracja</h1>
+                            <button
+                                onClick={goToHomePage}
+                                className="text-blue-600 hover:text-blue-800"
+                                type="button"
+                            >
+                                Powrót do strony głównej
+                            </button>
+                        </div>
 
-                    <TextInput
-                        id="name"
-                        name="name"
-                        value={data.name}
-                        className="mt-1 block w-full"
-                        autoComplete="name"
-                        isFocused={true}
-                        onChange={(e) => setData('name', e.target.value)}
-                        required
-                    />
+                        {errors.general && (
+                            <div className="mb-4 p-2 bg-red-100 text-red-700 rounded">
+                                {errors.general}
+                            </div>
+                        )}
 
-                    <InputError message={errors.name} className="mt-2" />
+                        <form onSubmit={handleSubmit}>
+                            {/* Imię */}
+                            <div className="mb-4">
+                                <label htmlFor="name" className="block text-sm font-medium text-gray-700">Imię i nazwisko</label>
+                                <input
+                                    id="name"
+                                    type="text"
+                                    name="name"
+                                    value={formData.name}
+                                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                                    autoComplete="name"
+                                    autoFocus
+                                    onChange={handleChange}
+                                    required
+                                />
+                                {errors.name && <p className="mt-1 text-sm text-red-600">{Array.isArray(errors.name) ? errors.name[0] : errors.name}</p>}
+                            </div>
+
+                            {/* Email */}
+                            <div className="mb-4">
+                                <label htmlFor="email" className="block text-sm font-medium text-gray-700">Email</label>
+                                <input
+                                    id="email"
+                                    type="email"
+                                    name="email"
+                                    value={formData.email}
+                                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                                    autoComplete="username"
+                                    onChange={handleChange}
+                                    required
+                                />
+                                {errors.email && <p className="mt-1 text-sm text-red-600">{Array.isArray(errors.email) ? errors.email[0] : errors.email}</p>}
+                            </div>
+
+                            {/* Hasło */}
+                            <div className="mb-4">
+                                <label htmlFor="password" className="block text-sm font-medium text-gray-700">Hasło</label>
+                                <input
+                                    id="password"
+                                    type="password"
+                                    name="password"
+                                    value={formData.password}
+                                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                                    autoComplete="new-password"
+                                    onChange={handleChange}
+                                    required
+                                />
+                                {errors.password && <p className="mt-1 text-sm text-red-600">{Array.isArray(errors.password) ? errors.password[0] : errors.password}</p>}
+                            </div>
+
+                            {/* Potwierdzenie hasła */}
+                            <div className="mb-6">
+                                <label htmlFor="password_confirmation" className="block text-sm font-medium text-gray-700">Powtórz hasło</label>
+                                <input
+                                    id="password_confirmation"
+                                    type="password"
+                                    name="password_confirmation"
+                                    value={formData.password_confirmation}
+                                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                                    autoComplete="new-password"
+                                    onChange={handleChange}
+                                    required
+                                />
+                                {errors.password_confirmation && <p className="mt-1 text-sm text-red-600">{Array.isArray(errors.password_confirmation) ? errors.password_confirmation[0] : errors.password_confirmation}</p>}
+                            </div>
+
+                            <div className="flex items-center justify-between mt-6">
+                                <Link
+                                    href="/login"
+                                    className="text-sm text-gray-600 hover:text-gray-900 underline"
+                                >
+                                    Masz już konto? Zaloguj się
+                                </Link>
+
+                                <button
+                                    type="submit"
+                                    className={`px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 focus:outline-none ${processing ? 'opacity-75 cursor-not-allowed' : ''}`}
+                                    disabled={processing}
+                                >
+                                    {processing ? 'Przetwarzanie...' : 'Zarejestruj się'}
+                                </button>
+                            </div>
+                        </form>
+                    </div>
                 </div>
-
-                <div className="mt-4">
-                    <InputLabel htmlFor="email" value="Email" />
-
-                    <TextInput
-                        id="email"
-                        type="email"
-                        name="email"
-                        value={data.email}
-                        className="mt-1 block w-full"
-                        autoComplete="username"
-                        onChange={(e) => setData('email', e.target.value)}
-                        required
-                    />
-
-                    <InputError message={errors.email} className="mt-2" />
-                </div>
-
-                <div className="mt-4">
-                    <InputLabel htmlFor="password" value="Password" />
-
-                    <TextInput
-                        id="password"
-                        type="password"
-                        name="password"
-                        value={data.password}
-                        className="mt-1 block w-full"
-                        autoComplete="new-password"
-                        onChange={(e) => setData('password', e.target.value)}
-                        required
-                    />
-
-                    <InputError message={errors.password} className="mt-2" />
-                </div>
-
-                <div className="mt-4">
-                    <InputLabel
-                        htmlFor="password_confirmation"
-                        value="Confirm Password"
-                    />
-
-                    <TextInput
-                        id="password_confirmation"
-                        type="password"
-                        name="password_confirmation"
-                        value={data.password_confirmation}
-                        className="mt-1 block w-full"
-                        autoComplete="new-password"
-                        onChange={(e) =>
-                            setData('password_confirmation', e.target.value)
-                        }
-                        required
-                    />
-
-                    <InputError
-                        message={errors.password_confirmation}
-                        className="mt-2"
-                    />
-                </div>
-
-                <div className="mt-4 flex items-center justify-end">
-                    <Link
-                        href={route('login')}
-                        className="rounded-md text-sm text-gray-600 underline hover:text-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
-                    >
-                        Already registered?
-                    </Link>
-
-                    <PrimaryButton className="ms-4" disabled={processing}>
-                        Register
-                    </PrimaryButton>
-                </div>
-            </form>
-        </GuestLayout>
+            </div>
+        </>
     );
 }

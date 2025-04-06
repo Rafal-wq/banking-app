@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
+use App\Providers\RouteServiceProvider;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -28,7 +29,7 @@ class RegisteredUserController extends Controller
      *
      * @throws \Illuminate\Validation\ValidationException
      */
-    public function store(Request $request): RedirectResponse
+    public function store(Request $request)
     {
         $request->validate([
             'name' => 'required|string|max:255',
@@ -46,6 +47,18 @@ class RegisteredUserController extends Controller
 
         Auth::login($user);
 
-        return redirect(route('dashboard', absolute: false));
+        // Dla żądań AJAX lub API, zwracamy token i informacje o użytkowniku
+        if ($request->wantsJson()) {
+            $token = $user->createToken('api-token')->plainTextToken;
+
+            return response()->json([
+                'token' => $token,
+                'user' => $user,
+                'redirect' => RouteServiceProvider::HOME
+            ]);
+        }
+
+        // Dla standardowych żądań, zwracamy przekierowanie
+        return redirect(RouteServiceProvider::HOME);
     }
 }

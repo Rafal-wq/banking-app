@@ -15,8 +15,19 @@ class RedirectIfAuthenticated
         $guards = empty($guards) ? [null] : $guards;
 
         foreach ($guards as $guard) {
-            if (Auth::guard($guard)->check() && !$request->expectsJson() && !$request->is('api/*')) {
-                return redirect(RouteServiceProvider::HOME);
+            if (Auth::guard($guard)->check()) {
+                // Dla żądań AJAX lub API, zwraca odpowiedź JSON
+                if ($request->expectsJson() || $request->is('api/*')) {
+                    return response()->json([
+                        'success' => true,
+                        'message' => 'Already authenticated',
+                        'redirect' => RouteServiceProvider::HOME
+                    ]);
+                }
+
+                // Przekierowanie z komunikatem dla żądań standardowych
+                return redirect(RouteServiceProvider::HOME)
+                    ->with('success', 'Jesteś już zalogowany');
             }
         }
 

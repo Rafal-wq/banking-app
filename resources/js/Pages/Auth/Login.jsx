@@ -1,131 +1,149 @@
-import React, { useState } from 'react';
-import { Head } from '@inertiajs/react';
-import InputLabel from '@/components/InputLabel';
-import TextInput from '@/components/TextInput';
-import InputError from '@/components/InputError';
-import PrimaryButton from '@/components/PrimaryButton';
-import { Link } from '@inertiajs/react';
+import { useState } from 'react';
+import { Head, Link } from '@inertiajs/react';
 import axios from 'axios';
 
 export default function Login() {
     const [formData, setFormData] = useState({
         email: '',
         password: '',
-        remember: false,
+        remember: false
     });
 
-    const [processing, setProcessing] = useState(false);
     const [errors, setErrors] = useState({});
-    const [generalError, setGeneralError] = useState('');
+    const [processing, setProcessing] = useState(false);
 
     const handleChange = (e) => {
-        const { name, value, checked, type } = e.target;
+        const { name, value, type, checked } = e.target;
         setFormData(prevState => ({
             ...prevState,
             [name]: type === 'checkbox' ? checked : value
         }));
     };
 
-    async function handleSubmit(e) {
+    const handleSubmit = async (e) => {
         e.preventDefault();
         setProcessing(true);
         setErrors({});
-        setGeneralError('');
 
         try {
-            const response = await axios.post('/login', formData, {
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Accept': 'application/json',
-                    'X-Requested-With': 'XMLHttpRequest'
-                }
-            });
+            // Pobieramy CSRF token
+            await axios.get('/sanctum/csrf-cookie');
 
-            if (response.data.token) {
+            // Logowanie
+            const response = await axios.post('/login', formData);
+
+            // Zapisujemy token, jeśli istnieje w odpowiedzi
+            if (response.data && response.data.token) {
                 localStorage.setItem('auth_token', response.data.token);
-                localStorage.setItem('user', JSON.stringify(response.data.user));
-                window.location.href = '/dashboard';
             }
+
+            // Bezpośrednie przekierowanie za pomocą window.location
+            window.location.replace('/dashboard');
         } catch (error) {
-            if (error.response && error.response.data.errors) {
+            setProcessing(false);
+            if (error.response && error.response.data && error.response.data.errors) {
                 setErrors(error.response.data.errors);
             } else {
-                setGeneralError('Wystąpił błąd podczas logowania. Spróbuj ponownie.');
+                setErrors({ general: 'Nieprawidłowe dane logowania.' });
             }
-            setProcessing(false);
         }
-    }
+    };
+
+    // Funkcja do powrotu na stronę główną
+    const goToHomePage = () => {
+        window.location.replace('/');
+    };
 
     return (
         <>
             <Head title="Logowanie" />
 
-            <div className="min-h-screen flex flex-col sm:justify-center items-center pt-6 sm:pt-0 bg-gray-100">
-                <div className="w-full sm:max-w-md mt-6 px-6 py-4 bg-white shadow-md overflow-hidden sm:rounded-lg">
-                    <h1 className="text-2xl font-bold text-center mb-6">Logowanie</h1>
-
-                    {generalError && (
-                        <div className="mb-4 p-2 bg-red-100 text-red-700 rounded">
-                            {generalError}
-                        </div>
-                    )}
-
-                    <form onSubmit={handleSubmit}>
-                        <div>
-                            <InputLabel htmlFor="email" value="Email" />
-                            <TextInput
-                                id="email"
-                                type="email"
-                                name="email"
-                                value={formData.email}
-                                className="mt-1 block w-full"
-                                autoComplete="username"
-                                autoFocus
-                                onChange={handleChange}
-                            />
-                            <InputError message={errors.email} className="mt-2" />
-                        </div>
-
-                        <div className="mt-4">
-                            <InputLabel htmlFor="password" value="Hasło" />
-                            <TextInput
-                                id="password"
-                                type="password"
-                                name="password"
-                                value={formData.password}
-                                className="mt-1 block w-full"
-                                autoComplete="current-password"
-                                onChange={handleChange}
-                            />
-                            <InputError message={errors.password} className="mt-2" />
-                        </div>
-
-                        <div className="block mt-4">
-                            <label className="flex items-center">
-                                <input
-                                    type="checkbox"
-                                    name="remember"
-                                    checked={formData.remember}
-                                    onChange={handleChange}
-                                    className="rounded border-gray-300 text-indigo-600 shadow-sm focus:ring-indigo-500"
-                                />
-                                <span className="ml-2 text-sm text-gray-600">Zapamiętaj mnie</span>
-                            </label>
-                        </div>
-
-                        <div className="flex items-center justify-end mt-4">
-                            <Link
-                                href="/forgot-password"
-                                className="underline text-sm text-gray-600 hover:text-gray-900 rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+            <div className="min-h-screen flex justify-center items-center bg-gray-100">
+                <div className="max-w-md w-full bg-white rounded-lg shadow-md overflow-hidden">
+                    <div className="p-6">
+                        <div className="flex justify-between items-center mb-4">
+                            <h1 className="text-2xl font-bold text-gray-800">Logowanie</h1>
+                            <button
+                                onClick={goToHomePage}
+                                className="text-blue-600 hover:text-blue-800"
+                                type="button"
                             >
-                                Zapomniałeś hasła?
-                            </Link>
-
-                            <PrimaryButton className="ml-4" disabled={processing}>
-                                {processing ? 'Logowanie...' : 'Zaloguj'}
-                            </PrimaryButton>
+                                Powrót do strony głównej
+                            </button>
                         </div>
-                    </form>
+
+                        {errors.general && (
+                            <div className="mb-4 p-2 bg-red-100 text-red-700 rounded">
+                                {errors.general}
+                            </div>
+                        )}
+
+                        <form onSubmit={handleSubmit}>
+                            {/* Email */}
+                            <div className="mb-4">
+                                <label htmlFor="email" className="block text-sm font-medium text-gray-700">Email</label>
+                                <input
+                                    id="email"
+                                    type="email"
+                                    name="email"
+                                    value={formData.email}
+                                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                                    autoComplete="username"
+                                    autoFocus
+                                    onChange={handleChange}
+                                    required
+                                />
+                                {errors.email && <p className="mt-1 text-sm text-red-600">{Array.isArray(errors.email) ? errors.email[0] : errors.email}</p>}
+                            </div>
+
+                            {/* Hasło */}
+                            <div className="mb-4">
+                                <label htmlFor="password" className="block text-sm font-medium text-gray-700">Hasło</label>
+                                <input
+                                    id="password"
+                                    type="password"
+                                    name="password"
+                                    value={formData.password}
+                                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                                    autoComplete="current-password"
+                                    onChange={handleChange}
+                                    required
+                                />
+                                {errors.password && <p className="mt-1 text-sm text-red-600">{Array.isArray(errors.password) ? errors.password[0] : errors.password}</p>}
+                            </div>
+
+                            {/* Zapamiętaj mnie */}
+                            <div className="mb-4">
+                                <label className="inline-flex items-center">
+                                    <input
+                                        type="checkbox"
+                                        name="remember"
+                                        checked={formData.remember}
+                                        onChange={handleChange}
+                                        className="rounded border-gray-300 text-indigo-600 shadow-sm focus:ring-indigo-500"
+                                    />
+                                    <span className="ml-2 text-sm text-gray-600">Zapamiętaj mnie</span>
+                                </label>
+                            </div>
+
+                            <div className="flex items-center justify-between mt-6">
+                                <Link
+                                    href="/forgot-password"
+                                    className="text-sm text-gray-600 hover:text-gray-900 underline"
+                                >
+                                    Zapomniałeś hasła?
+                                </Link>
+
+                                <button
+                                    type="submit"
+                                    className={`px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 focus:outline-none ${processing ? 'opacity-75 cursor-not-allowed' : ''}`}
+                                    disabled={processing}
+                                >
+                                    {processing ? 'Logowanie...' : 'Zaloguj'}
+                                </button>
+                            </div>
+                        </form>
+                    </div>
                 </div>
             </div>
         </>
