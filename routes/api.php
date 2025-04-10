@@ -67,6 +67,9 @@ Route::middleware(['auth:sanctum'])->group(function () {
         return $request->user();
     });
 
+    Route::get('bank-accounts/{bankAccount}/transactions', [TransactionController::class, 'getAccountTransactions'])
+        ->name('api.bank-accounts.transactions');
+
     Route::get('/my-accounts', function (Request $request) {
         $user = $request->user();
         if (!$user) {
