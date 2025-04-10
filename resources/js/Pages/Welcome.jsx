@@ -1,7 +1,7 @@
 import { Head, Link } from '@inertiajs/react';
 import { useEffect, useState } from 'react';
 
-export default function Welcome({ canLogin, canRegister, laravelVersion, phpVersion }) {
+export default function Welcome({ canLogin, canRegister, laravelVersion, phpVersion, stockData, currencyRates }) {
     const [currentDateTime, setCurrentDateTime] = useState(new Date());
 
     // Aktualizacja daty i czasu co sekundę
@@ -28,44 +28,11 @@ export default function Welcome({ canLogin, canRegister, laravelVersion, phpVers
         second: '2-digit',
     }).format(currentDateTime);
 
-    // Przykładowe dane giełdowe (później zastąpimy to danymi z API)
-    const stockData = {
-        nyse: {
-            name: 'New York Stock Exchange',
-            index: 'S&P 500',
-            value: '5,123.45',
-            change: '+0.75%',
-            trend: 'up' // up lub down
-        },
-        london: {
-            name: 'London Stock Exchange',
-            index: 'FTSE 100',
-            value: '7,936.23',
-            change: '-0.21%',
-            trend: 'down'
-        },
-        tokyo: {
-            name: 'Tokyo Stock Exchange',
-            index: 'Nikkei 225',
-            value: '39,523.55',
-            change: '+1.13%',
-            trend: 'up'
-        }
-    };
-
-    // Przykładowe kursy walut (później zastąpimy to danymi z API)
-    const currencyRates = [
-        { code: 'USD/PLN', rate: '3.9721', change: '+0.05%', trend: 'up' },
-        { code: 'EUR/PLN', rate: '4.3142', change: '-0.12%', trend: 'down' },
-        { code: 'GBP/PLN', rate: '5.1254', change: '+0.08%', trend: 'up' },
-        { code: 'CHF/PLN', rate: '4.4876', change: '-0.03%', trend: 'down' }
-    ];
-
     return (
         <div className="min-h-screen bg-gray-50">
             <Head title="Bank App - Strona główna" />
 
-            {/* Nagłówek z przyciskiem logowania */}
+            {/* Nagłówek z przyciskami logowania i rejestracji */}
             <div className="bg-white shadow">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                     <div className="flex justify-between h-16">
@@ -123,40 +90,46 @@ export default function Welcome({ canLogin, canRegister, laravelVersion, phpVers
 
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                         {/* NYSE */}
-                        <div className="bg-white rounded-lg shadow p-6 hover:shadow-md transition">
-                            <h4 className="font-bold">{stockData.nyse.name}</h4>
-                            <div className="flex justify-between items-center mt-2">
-                                <div className="text-gray-600">{stockData.nyse.index}</div>
-                                <div className="text-lg font-mono font-bold">{stockData.nyse.value}</div>
+                        {stockData.nyse && (
+                            <div className="bg-white rounded-lg shadow p-6 hover:shadow-md transition">
+                                <h4 className="font-bold">{stockData.nyse.name}</h4>
+                                <div className="flex justify-between items-center mt-2">
+                                    <div className="text-gray-600">{stockData.nyse.index}</div>
+                                    <div className="text-lg font-mono font-bold">{stockData.nyse.value}</div>
+                                </div>
+                                <div className={`text-right ${stockData.nyse.trend === 'up' ? 'text-green-600' : 'text-red-600'}`}>
+                                    {stockData.nyse.change}
+                                </div>
                             </div>
-                            <div className={`text-right ${stockData.nyse.trend === 'up' ? 'text-green-600' : 'text-red-600'}`}>
-                                {stockData.nyse.change}
-                            </div>
-                        </div>
+                        )}
 
                         {/* London */}
-                        <div className="bg-white rounded-lg shadow p-6 hover:shadow-md transition">
-                            <h4 className="font-bold">{stockData.london.name}</h4>
-                            <div className="flex justify-between items-center mt-2">
-                                <div className="text-gray-600">{stockData.london.index}</div>
-                                <div className="text-lg font-mono font-bold">{stockData.london.value}</div>
+                        {stockData.london && (
+                            <div className="bg-white rounded-lg shadow p-6 hover:shadow-md transition">
+                                <h4 className="font-bold">{stockData.london.name}</h4>
+                                <div className="flex justify-between items-center mt-2">
+                                    <div className="text-gray-600">{stockData.london.index}</div>
+                                    <div className="text-lg font-mono font-bold">{stockData.london.value}</div>
+                                </div>
+                                <div className={`text-right ${stockData.london.trend === 'up' ? 'text-green-600' : 'text-red-600'}`}>
+                                    {stockData.london.change}
+                                </div>
                             </div>
-                            <div className={`text-right ${stockData.london.trend === 'up' ? 'text-green-600' : 'text-red-600'}`}>
-                                {stockData.london.change}
-                            </div>
-                        </div>
+                        )}
 
                         {/* Tokyo */}
-                        <div className="bg-white rounded-lg shadow p-6 hover:shadow-md transition">
-                            <h4 className="font-bold">{stockData.tokyo.name}</h4>
-                            <div className="flex justify-between items-center mt-2">
-                                <div className="text-gray-600">{stockData.tokyo.index}</div>
-                                <div className="text-lg font-mono font-bold">{stockData.tokyo.value}</div>
+                        {stockData.tokyo && (
+                            <div className="bg-white rounded-lg shadow p-6 hover:shadow-md transition">
+                                <h4 className="font-bold">{stockData.tokyo.name}</h4>
+                                <div className="flex justify-between items-center mt-2">
+                                    <div className="text-gray-600">{stockData.tokyo.index}</div>
+                                    <div className="text-lg font-mono font-bold">{stockData.tokyo.value}</div>
+                                </div>
+                                <div className={`text-right ${stockData.tokyo.trend === 'up' ? 'text-green-600' : 'text-red-600'}`}>
+                                    {stockData.tokyo.change}
+                                </div>
                             </div>
-                            <div className={`text-right ${stockData.tokyo.trend === 'up' ? 'text-green-600' : 'text-red-600'}`}>
-                                {stockData.tokyo.change}
-                            </div>
-                        </div>
+                        )}
                     </div>
                 </div>
 
@@ -190,6 +163,11 @@ export default function Welcome({ canLogin, canRegister, laravelVersion, phpVers
                             </tbody>
                         </table>
                     </div>
+                </div>
+
+                {/* Aktualizacja danych */}
+                <div className="text-center text-xs text-gray-500 mb-8">
+                    <p>Dane finansowe są aktualizowane co 15 minut</p>
                 </div>
 
                 {/* Informacje o wersji */}
