@@ -1,5 +1,6 @@
 import { Head, Link } from '@inertiajs/react';
 import { useEffect, useState } from 'react';
+import BankLogo from '@/components/BankLogo';
 
 export default function Welcome({ canLogin, canRegister, laravelVersion, phpVersion, stockData, currencyRates }) {
     const [currentDateTime, setCurrentDateTime] = useState(new Date());
@@ -37,7 +38,10 @@ export default function Welcome({ canLogin, canRegister, laravelVersion, phpVers
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                     <div className="flex justify-between h-16">
                         <div className="flex items-center">
-                            <h1 className="text-xl font-bold text-gray-800">Bank App</h1>
+                            {/* Tutaj zamieniamy tekst na komponent logo */}
+                            <BankLogo className="h-8" />
+                            {/* Opcjonalnie możesz zachować tekst obok logo */}
+                            <span className="ml-2 text-xl font-bold text-gray-800">Bank App</span>
                         </div>
                         <div className="flex items-center">
                             {canLogin && (
