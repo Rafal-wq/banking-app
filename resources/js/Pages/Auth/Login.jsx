@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Head, Link } from '@inertiajs/react';
 import axios from 'axios';
+import BankLogo from '@/components/BankLogo';
 
 export default function Login() {
     const [formData, setFormData] = useState({
@@ -61,8 +62,13 @@ export default function Login() {
             <div className="min-h-screen flex justify-center items-center bg-gray-100">
                 <div className="max-w-md w-full bg-white rounded-lg shadow-md overflow-hidden">
                     <div className="p-6">
-                        <div className="flex justify-between items-center mb-4">
+                        {/* Dodanie logo banku na górze formularza */}
+                        <div className="flex flex-col items-center mb-6">
+                            <BankLogo className="h-16 w-auto mb-2" />
                             <h1 className="text-2xl font-bold text-gray-800">Logowanie</h1>
+                        </div>
+
+                        <div className="flex justify-end mb-4">
                             <button
                                 onClick={goToHomePage}
                                 className="text-blue-600 hover:text-blue-800"
@@ -141,6 +147,17 @@ export default function Login() {
                                 >
                                     {processing ? 'Logowanie...' : 'Zaloguj'}
                                 </button>
+                            </div>
+
+                            {/* Dodanie przycisku rejestracji na dole formularza */}
+                            <div className="mt-6 text-center">
+                                <span className="text-gray-600">Nie masz konta?</span>
+                                <Link
+                                    href="/register"
+                                    className="ml-1 text-blue-600 hover:text-blue-800 underline"
+                                >
+                                    Zarejestruj się
+                                </Link>
                             </div>
                         </form>
                     </div>
