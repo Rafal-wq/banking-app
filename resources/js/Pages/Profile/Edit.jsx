@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import BankLogo from '@/components/BankLogo';
 
 export default function Edit(props) {
     // Stan komponentu
@@ -231,18 +232,26 @@ export default function Edit(props) {
     // Główny render
     return (
         <div className="min-h-screen bg-gray-100">
-            <div className="py-12">
-                <div className="max-w-7xl mx-auto sm:px-6 lg:px-8">
-                    <div className="flex justify-between items-center mb-6">
-                        <h1 className="text-2xl font-semibold text-gray-800">Profil użytkownika</h1>
+            {/* Nagłówek z logo */}
+            <div className="bg-white shadow-sm">
+                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                    <div className="flex justify-between items-center h-16">
+                        <div className="flex items-center">
+                            <BankLogo className="h-10 w-auto" />
+                            <span className="ml-3 text-xl font-semibold text-gray-800">Profil Użytkownika</span>
+                        </div>
                         <button
                             onClick={() => window.location.href = '/dashboard'}
                             className="px-4 py-2 bg-gray-600 text-white rounded hover:bg-gray-700 transition"
                         >
-                            Powrót do dashboardu
+                            Powrót do panelu
                         </button>
                     </div>
+                </div>
+            </div>
 
+            <div className="py-12">
+                <div className="max-w-7xl mx-auto sm:px-6 lg:px-8">
                     {/* Powiadomienie */}
                     {notification.show && (
                         <div className={`mb-4 p-4 rounded ${notification.type === 'success' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
