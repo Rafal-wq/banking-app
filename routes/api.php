@@ -47,6 +47,16 @@ Route::get('/auth-test', function (Request $request) {
     }
 })->middleware('auth:sanctum');
 
+Route::get('/exchange-rates', function (Request $request) {
+    $currencyService = new \App\Services\CurrencyExchangeService();
+    $rates = $currencyService->getAllExchangeRates();
+
+    return response()->json([
+        'success' => true,
+        'data' => $rates
+    ]);
+})->middleware('auth:sanctum');
+
 Route::post('/login', [AuthenticatedSessionController::class, 'store']);
 Route::post('/register', [RegisteredUserController::class, 'store']);
 

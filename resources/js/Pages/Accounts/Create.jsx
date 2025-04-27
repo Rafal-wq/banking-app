@@ -1,4 +1,7 @@
-import React, { useState } from 'react';
+// W pliku resources/js/Pages/Accounts/Create.jsx
+// Dodajemy informację o bonusie powitalnym dla pierwszego konta
+
+import React, { useState, useEffect } from 'react';
 import { Link, router } from '@inertiajs/react';
 import axios from 'axios';
 import BankLogo from '@/components/BankLogo';
@@ -13,6 +16,31 @@ export default function CreateAccount() {
     const [errors, setErrors] = useState({});
     const [success, setSuccess] = useState(false);
     const [message, setMessage] = useState('');
+    const [hasExistingAccounts, setHasExistingAccounts] = useState(false);
+
+    // Sprawdzamy, czy użytkownik ma już jakieś konta
+    useEffect(() => {
+        const checkExistingAccounts = async () => {
+            try {
+                const response = await axios.get('/api/bank-accounts', {
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest'
+                    },
+                    withCredentials: true
+                });
+
+                if (response.data.success && response.data.data) {
+                    setHasExistingAccounts(response.data.data.length > 0);
+                }
+            } catch (error) {
+                console.error('Error checking existing accounts:', error);
+            }
+        };
+
+        checkExistingAccounts();
+    }, []);
 
     const handleChange = (e) => {
         const { name, value } = e.target;
@@ -122,6 +150,21 @@ export default function CreateAccount() {
                         {message && (
                             <div className="bg-red-100 p-4 rounded mb-4 text-red-700">
                                 {message}
+                            </div>
+                        )}
+
+                        {/* Informacja o bonusie powitalnym */}
+                        {!hasExistingAccounts && (
+                            <div className="bg-blue-100 p-4 rounded mb-6 text-blue-700 border-l-4 border-blue-500">
+                                <h3 className="font-bold text-lg mb-1">Bonus powitalny!</h3>
+                                <p>Zakładając swoje pierwsze konto, otrzymasz bonus powitalny w wysokości:</p>
+                                <ul className="list-disc list-inside mt-2 mb-2 font-medium">
+                                    <li>1000 PLN dla konta w złotówkach</li>
+                                    <li>220 EUR dla konta w euro</li>
+                                    <li>250 USD dla konta w dolarach</li>
+                                    <li>190 GBP dla konta w funtach</li>
+                                </ul>
+                                <p className="text-sm">Bonus zostanie automatycznie dodany do Twojego konta po jego utworzeniu.</p>
                             </div>
                         )}
 

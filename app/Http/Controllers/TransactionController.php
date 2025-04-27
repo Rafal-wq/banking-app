@@ -40,6 +40,7 @@ class TransactionController extends Controller
     /**
      * Store a newly created transaction in storage.
      */
+
     public function store(Request $request)
     {
         $validator = Validator::make($request->all(), [
@@ -59,6 +60,7 @@ class TransactionController extends Controller
 
         $user = $request->user();
         $fromAccount = BankAccount::findOrFail($request->from_account_id);
+        $toAccount = BankAccount::findOrFail($request->to_account_id);
 
         // Authorize that the source account belongs to the authenticated user
         if ($user->id !== $fromAccount->user_id) {
@@ -77,7 +79,6 @@ class TransactionController extends Controller
         }
 
         // Check if the destination account is active
-        $toAccount = BankAccount::findOrFail($request->to_account_id);
         if (!$toAccount->is_active) {
             return response()->json([
                 'success' => false,
@@ -85,8 +86,24 @@ class TransactionController extends Controller
             ], 422);
         }
 
+        $sourceAmount = $request->amount;
+        $targetAmount = $sourceAmount;
+        $exchangeRate = 1.0;
+
+        // Sprawdź, czy potrzebne jest przewalutowanie
+        if ($fromAccount->currency !== $toAccount->currency) {
+            // Tworzymy instancję serwisu do przewalutowania
+            $currencyService = new \App\Services\CurrencyExchangeService();
+
+            // Obliczamy kurs wymiany
+            $exchangeRate = $currencyService->getExchangeRate($fromAccount->currency, $toAccount->currency);
+
+            // Obliczamy kwotę docelową po przewalutowaniu
+            $targetAmount = $currencyService->convert($sourceAmount, $fromAccount->currency, $toAccount->currency);
+        }
+
         // Check if the source account has enough balance
-        if ($fromAccount->balance < $request->amount) {
+        if ($fromAccount->balance < $sourceAmount) {
             return response()->json([
                 'success' => false,
                 'message' => 'Insufficient funds in the source account.',
@@ -100,38 +117,68 @@ class TransactionController extends Controller
             $transaction = Transaction::create([
                 'from_account_id' => $request->from_account_id,
                 'to_account_id' => $request->to_account_id,
-                'amount' => $request->amount,
+                'amount' => $sourceAmount, // Zapisujemy kwotę źródłową
                 'title' => $request->title,
-                'description' => $request->description,
+                'description' => $request->description .
+                    // Dodajemy informację o przewalutowaniu, jeśli miało miejsce
+                    ($fromAccount->currency !== $toAccount->currency ?
+                        " (Przewalutowanie: {$sourceAmount} {$fromAccount->currency} = {$targetAmount} {$toAccount->currency}, kurs: {$exchangeRate})" : ''),
                 'status' => 'pending',
             ]);
 
-            // Execute the transaction
-            $success = $transaction->execute();
+            // Modyfikacja wykonania transakcji, aby brać pod uwagę przewalutowanie
+            // Zamiast używać metody execute z modelu Transaction, robimy to ręcznie
 
-            if ($success) {
-                DB::commit();
+            // Pobierz środki z konta źródłowego
+            $withdrawSuccess = $fromAccount->withdraw($sourceAmount);
 
-                // Clear the cache for this user's accounts and transactions
-                Cache::forget('user.'.$user->id.'.accounts');
-                Cache::forget('user.'.$user->id.'.transactions');
+            // Tylko gdy pobranie się powiedzie, dodajemy środki do konta docelowego
+            if ($withdrawSuccess) {
+                // Dodajemy przeliczoną kwotę do konta docelowego
+                $depositSuccess = $toAccount->deposit($targetAmount);
 
-                // If the destination account belongs to another user, clear their cache too
-                if ($fromAccount->user_id !== $toAccount->user_id) {
-                    Cache::forget('user.'.$toAccount->user_id.'.accounts');
-                    Cache::forget('user.'.$toAccount->user_id.'.transactions');
+                if ($depositSuccess) {
+                    $transaction->status = 'completed';
+                    $transaction->executed_at = now();
+                    $transaction->save();
+
+                    DB::commit();
+
+                    // Clear the cache for this user's accounts and transactions
+                    Cache::forget('user.'.$user->id.'.accounts');
+                    Cache::forget('user.'.$user->id.'.transactions');
+
+                    // If the destination account belongs to another user, clear their cache too
+                    if ($fromAccount->user_id !== $toAccount->user_id) {
+                        Cache::forget('user.'.$toAccount->user_id.'.accounts');
+                        Cache::forget('user.'.$toAccount->user_id.'.transactions');
+                    }
+
+                    return response()->json([
+                        'success' => true,
+                        'data' => $transaction->load(['fromAccount', 'toAccount']),
+                        'message' => 'Transaction completed successfully' .
+                            ($fromAccount->currency !== $toAccount->currency ?
+                                " with currency conversion from {$sourceAmount} {$fromAccount->currency} to {$targetAmount} {$toAccount->currency}" : ''),
+                    ], 201);
+                } else {
+                    // If deposit fails, rollback the transaction
+                    DB::rollBack();
+                    $transaction->status = 'failed';
+                    $transaction->save();
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Failed to deposit funds to the destination account.',
+                    ], 500);
                 }
-
-                return response()->json([
-                    'success' => true,
-                    'data' => $transaction->load(['fromAccount', 'toAccount']),
-                    'message' => 'Transaction completed successfully.',
-                ], 201);
             } else {
+                // If withdrawal fails, mark transaction as failed
                 DB::rollBack();
+                $transaction->status = 'failed';
+                $transaction->save();
                 return response()->json([
                     'success' => false,
-                    'message' => 'Failed to execute the transaction.',
+                    'message' => 'Failed to withdraw funds from the source account.',
                 ], 500);
             }
         } catch (\Exception $e) {

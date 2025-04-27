@@ -36,6 +36,10 @@ Route::middleware('guest')->group(function () {
     })->name('register');
 });
 
+Route::get('/exchange', function () {
+    return Inertia::render('Exchange');
+})->name('exchange');
+
 Route::get('/logout-page', function () {
     Auth::logout();
     return redirect('/login')->with('message', 'Zostałeś wylogowany.');

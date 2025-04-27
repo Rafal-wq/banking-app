@@ -170,6 +170,14 @@ export default function Dashboard() {
                         </Link>
 
                         <Link
+                            href="/exchange"
+                            className="p-4 border rounded text-center hover:bg-gray-50 transition"
+                        >
+                            <div className="font-semibold">Wymiana walut</div>
+                            <p className="text-sm text-gray-600">Wymień środki między walutami</p>
+                        </Link>
+
+                        <Link
                             href="/accounts/create"
                             className="p-4 border rounded text-center hover:bg-gray-50 transition"
                         >

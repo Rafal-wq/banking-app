@@ -44,6 +44,8 @@ class BankAccountController extends Controller
     /**
      * Store a newly created bank account in storage.
      */
+
+
     public function store(Request $request): \Illuminate\Http\JsonResponse
     {
         $validator = Validator::make($request->all(), [
@@ -60,6 +62,12 @@ class BankAccountController extends Controller
 
         $user = $request->user();
 
+        // Sprawdzamy, czy użytkownik ma już jakieś konta
+        $existingAccountsCount = BankAccount::where('user_id', $user->id)->count();
+
+        // Przygotuj informację o bonusie do wyświetlenia
+        $bonusMessage = '';
+
         // Generate a unique account number
         $accountNumber = BankAccount::generateAccountNumber();
 
@@ -67,17 +75,50 @@ class BankAccountController extends Controller
             'user_id' => $user->id,
             'account_number' => $accountNumber,
             'name' => $request->name,
-            'balance' => 0.00,
+            'balance' => 0.00, // Początkowe saldo nadal 0
             'currency' => $request->currency,
             'is_active' => true,
         ]);
+
+        // Dodaj bonus powitalny tylko dla pierwszego konta użytkownika
+        if ($existingAccountsCount === 0) {
+            $bonusAmount = 1000.00; // 1000 w walucie konta
+
+            // Jeśli waluta nie jest PLN, przelicz odpowiednią wartość bonusu
+            if ($request->currency !== 'PLN') {
+                // Przelicznik waluty - tutaj używamy uproszczonych stałych kursów
+                // W rzeczywistej aplikacji lepiej użyć aktualnych kursów z API
+                $exchangeRates = [
+                    'EUR' => 0.22, // 1 PLN = 0.22 EUR
+                    'USD' => 0.25, // 1 PLN = 0.25 USD
+                    'GBP' => 0.19, // 1 PLN = 0.19 GBP
+                ];
+
+                $bonusAmount = round(1000 * $exchangeRates[$request->currency], 2);
+            }
+
+            $account->deposit($bonusAmount);
+
+            // Utwórz systemową transakcję dla bonusu powitalnego
+            $transaction = \App\Models\Transaction::create([
+                'from_account_id' => $account->id,  // W przypadku bonusu, źródłem jest system, ale dla uproszczenia używamy tego samego konta
+                'to_account_id' => $account->id,
+                'amount' => $bonusAmount,
+                'title' => 'Bonus powitalny',
+                'description' => 'Bonus powitalny za utworzenie pierwszego konta',
+                'status' => 'completed',
+                'executed_at' => now(),
+            ]);
+
+            $bonusMessage = ' with a welcome bonus of ' . number_format($bonusAmount, 2) . ' ' . $request->currency;
+        }
 
         Cache::forget('user.'.$user->id.'.accounts');
 
         return response()->json([
             'success' => true,
-            'data' => $account,
-            'message' => 'Bank account created successfully.',
+            'data' => $account->fresh(),
+            'message' => 'Bank account created successfully' . $bonusMessage,
         ], 201);
     }
 

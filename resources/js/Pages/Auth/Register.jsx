@@ -1,13 +1,14 @@
-import { useState } from 'react';
+import { useState } from "react";
 import { Head, Link } from '@inertiajs/react';
-import axios from 'axios';
+import axios from "axios";
+import BankLogo from '@/components/BankLogo';
 
 export default function Register() {
     const [formData, setFormData] = useState({
-        name: '',
-        email: '',
-        password: '',
-        password_confirmation: ''
+        name: "",
+        email: "",
+        password: "",
+        password_confirmation: ""
     });
 
     const [errors, setErrors] = useState({});
@@ -62,8 +63,13 @@ export default function Register() {
             <div className="min-h-screen flex justify-center items-center bg-gray-100">
                 <div className="max-w-md w-full bg-white rounded-lg shadow-md overflow-hidden">
                     <div className="p-6">
-                        <div className="flex justify-between items-center mb-4">
+                        {/* Dodanie logo banku na górze formularza */}
+                        <div className="flex flex-col items-center mb-6">
+                            <BankLogo className="h-16 w-auto mb-2" />
                             <h1 className="text-2xl font-bold text-gray-800">Rejestracja</h1>
+                        </div>
+
+                        <div className="flex justify-end mb-4">
                             <button
                                 onClick={goToHomePage}
                                 className="text-blue-600 hover:text-blue-800"
