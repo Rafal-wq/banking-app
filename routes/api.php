@@ -77,6 +77,14 @@ Route::middleware(['auth:sanctum'])->group(function () {
         return $request->user();
     });
 
+    Route::apiResource('transactions', TransactionController::class)->names([
+        'index' => 'api.transactions.index',
+        'store' => 'api.transactions.store',
+        'show' => 'api.transactions.show',
+        'update' => 'api.transactions.update',
+        'destroy' => 'api.transactions.destroy',
+    ]);
+
     Route::get('bank-accounts/{bankAccount}/transactions', [TransactionController::class, 'getAccountTransactions'])
         ->name('api.bank-accounts.transactions');
 

@@ -58,6 +58,25 @@ export default function TransactionsIndex() {
         }).format(amount);
     };
 
+    // Funkcja do ekstrahowania przeliczonej kwoty z opisu transakcji
+    const extractConvertedAmount = (description) => {
+        if (!description) return null;
+
+        // Próba znalezienia wzorca "Przewalutowanie: X WALUTA = Y WALUTA, kurs: Z"
+        const match = description.match(/Przewalutowanie: (\d+(\.\d+)?) ([A-Z]+) = (\d+(\.\d+)?) ([A-Z]+), kurs:/);
+        if (match && match[4] && match[6]) {
+            // match[1] to kwota źródłowa, match[3] to waluta źródłowa
+            // match[4] to przeliczona kwota, match[6] to waluta docelowa
+            return {
+                sourceAmount: parseFloat(match[1]),
+                sourceCurrency: match[3],
+                targetAmount: parseFloat(match[4]),
+                targetCurrency: match[6]
+            };
+        }
+        return null;
+    };
+
     if (loading) {
         return (
             <div className="min-h-screen bg-gray-100">
@@ -164,6 +183,30 @@ export default function TransactionsIndex() {
                                     const amountPrefix = isOutgoing ? '-' : '+';
                                     const currency = (isOutgoing ? transaction.fromAccount : transaction.toAccount)?.currency || 'PLN';
 
+                                    // Pobierz informacje o przewalutowaniu
+                                    const conversionInfo = extractConvertedAmount(transaction.description);
+
+                                    // Określ kwotę do wyświetlenia
+                                    let displayAmount;
+                                    let displayCurrency;
+
+                                    if (isOutgoing) {
+                                        // Dla transakcji wychodzącej - pokazuj oryginalną kwotę źródłową
+                                        displayAmount = transaction.amount;
+                                        displayCurrency = currency;
+                                    } else {
+                                        // Dla transakcji przychodzącej
+                                        if (conversionInfo && conversionInfo.targetCurrency === currency) {
+                                            // Jeśli była przewalutowana na walutę naszego konta docelowego
+                                            displayAmount = conversionInfo.targetAmount;
+                                            displayCurrency = conversionInfo.targetCurrency;
+                                        } else {
+                                            // Brak przewalutowania lub waluty są identyczne
+                                            displayAmount = transaction.amount;
+                                            displayCurrency = currency;
+                                        }
+                                    }
+
                                     return (
                                         <tr key={transaction.id} className="hover:bg-gray-50">
                                             <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
@@ -180,7 +223,7 @@ export default function TransactionsIndex() {
                                                 )}
                                             </td>
                                             <td className={`px-6 py-4 whitespace-nowrap text-sm font-medium ${amountClass}`}>
-                                                {amountPrefix}{formatAmount(transaction.amount, currency)}
+                                                {amountPrefix}{formatAmount(displayAmount, displayCurrency)}
                                             </td>
                                             <td className="px-6 py-4 whitespace-nowrap text-sm">
                                                 <span className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${

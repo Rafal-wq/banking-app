@@ -90,7 +90,7 @@ class TransactionController extends Controller
         $targetAmount = $sourceAmount;
         $exchangeRate = 1.0;
 
-        // Sprawdź, czy potrzebne jest przewalutowanie
+// Sprawdź, czy potrzebne jest przewalutowanie
         if ($fromAccount->currency !== $toAccount->currency) {
             // Tworzymy instancję serwisu do przewalutowania
             $currencyService = new \App\Services\CurrencyExchangeService();
@@ -118,6 +118,7 @@ class TransactionController extends Controller
                 'from_account_id' => $request->from_account_id,
                 'to_account_id' => $request->to_account_id,
                 'amount' => $sourceAmount, // Zapisujemy kwotę źródłową
+                'target_amount' => $targetAmount, // Dodaj tę linię - zapisujemy kwotę docelową
                 'title' => $request->title,
                 'description' => $request->description .
                     // Dodajemy informację o przewalutowaniu, jeśli miało miejsce

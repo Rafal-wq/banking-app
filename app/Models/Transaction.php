@@ -19,6 +19,7 @@ class Transaction extends Model
         'from_account_id',
         'to_account_id',
         'amount',
+        'target_amount', // Dodaj tę linię
         'title',
         'description',
         'status',
@@ -32,6 +33,7 @@ class Transaction extends Model
      */
     protected $casts = [
         'amount' => 'decimal:2',
+        'target_amount' => 'decimal:2', // Dodaj tę linię
         'executed_at' => 'datetime',
     ];
 

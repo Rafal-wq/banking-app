@@ -75,6 +75,25 @@ export default function AccountDetails({ id }) {
         }).format(amount);
     };
 
+    // Funkcja do ekstrahowania przeliczonej kwoty z opisu transakcji
+    const extractConvertedAmount = (description) => {
+        if (!description) return null;
+
+        // Próba znalezienia wzorca "Przewalutowanie: X WALUTA = Y WALUTA, kurs: Z"
+        const match = description.match(/Przewalutowanie: (\d+(\.\d+)?) ([A-Z]+) = (\d+(\.\d+)?) ([A-Z]+), kurs:/);
+        if (match && match[4] && match[6]) {
+            // match[1] to kwota źródłowa, match[3] to waluta źródłowa
+            // match[4] to przeliczona kwota, match[6] to waluta docelowa
+            return {
+                sourceAmount: parseFloat(match[1]),
+                sourceCurrency: match[3],
+                targetAmount: parseFloat(match[4]),
+                targetCurrency: match[6]
+            };
+        }
+        return null;
+    };
+
     if (loading) {
         return (
             <div className="min-h-screen bg-gray-100">
@@ -223,9 +242,28 @@ export default function AccountDetails({ id }) {
                                 {transactions.map(transaction => {
                                     // Określenie typu transakcji (przychodzące/wychodzące)
                                     const isIncoming = transaction.to_account_id === parseInt(id);
-                                    const displayAmount = isIncoming
-                                        ? `+${formatAmount(transaction.amount, account.currency)}`
-                                        : `-${formatAmount(transaction.amount, account.currency)}`;
+
+                                    // Pobierz informacje o przewalutowaniu z opisu, jeśli istnieją
+                                    const conversionInfo = extractConvertedAmount(transaction.description);
+
+                                    let displayAmount;
+
+                                    if (isIncoming) {
+                                        // Dla transakcji przychodzącej
+                                        if (transaction.target_amount) {
+                                            // Jeśli mamy zapisaną wartość docelową po przewalutowaniu
+                                            displayAmount = `+${formatAmount(transaction.target_amount, account.currency)}`;
+                                        } else if (conversionInfo && conversionInfo.targetCurrency === account.currency) {
+                                            // Kompatybilność z poprzednim rozwiązaniem (jeśli były stare transakcje)
+                                            displayAmount = `+${formatAmount(conversionInfo.targetAmount, account.currency)}`;
+                                        } else {
+                                            // Brak przewalutowania lub brak informacji
+                                            displayAmount = `+${formatAmount(transaction.amount, account.currency)}`;
+                                        }
+                                    } else {
+                                        // Dla transakcji wychodzącej - zawsze pokazuj oryginalną kwotę
+                                        displayAmount = `-${formatAmount(transaction.amount, account.currency)}`;
+                                    }
 
                                     // Data wykonania (lub utworzenia jeśli nie została wykonana)
                                     const displayDate = transaction.executed_at
