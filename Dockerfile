@@ -10,6 +10,8 @@ RUN apt-get update && apt-get install -y \
     zip \
     unzip
 
+RUN npm install --no-audit --no-fund --legacy-peer-deps --verbose
+
 # Install Node.js (używamy nowszej wersji z oficjalnego repo)
 RUN curl -fsSL https://deb.nodesource.com/setup_20.x | bash - \
     && apt-get install -y nodejs \
@@ -37,7 +39,7 @@ RUN composer install --no-dev --optimize-autoloader
 RUN chmod -R 775 /var/www/storage /var/www/bootstrap/cache
 
 # Install NPM dependencies with verbose output to diagnose issues
-RUN npm install --no-audit --no-fund --verbose
+RUN npm install --no-audit --no-fund --production --verbose
 
 # Build assets with verbose output
 RUN npm run build --verbose
@@ -50,3 +52,10 @@ EXPOSE 8000
 
 # Start server
 CMD php artisan serve --host=0.0.0.0 --port=8000
+
+RUN node -v && npm -v
+
+RUN npm config set registry https://registry.npmjs.org/ && \
+    npm install --no-audit --no-fund --verbose
+
+RUN rm -f package-lock.json && npm install --no-audit --no-fund --verbose
