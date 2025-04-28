@@ -1,4 +1,14 @@
+# Etap 1: Budowanie frontendu
+FROM node:20 as frontend-builder
+WORKDIR /app
+COPY package*.json ./
+RUN npm install --legacy-peer-deps
+COPY . .
+RUN npm run build
+
+# Etap 2: Konfiguracja PHP
 FROM php:8.2-fpm
+WORKDIR /var/www
 
 # System dependencies
 RUN apt-get update && apt-get install -y \
@@ -10,41 +20,23 @@ RUN apt-get update && apt-get install -y \
     zip \
     unzip
 
-RUN npm install --no-audit --no-fund --legacy-peer-deps --verbose
-
-# Install Node.js (używamy nowszej wersji z oficjalnego repo)
-RUN curl -fsSL https://deb.nodesource.com/setup_20.x | bash - \
-    && apt-get install -y nodejs \
-    && npm install -g npm@latest
-
-# Clear cache
-RUN apt-get clean && rm -rf /var/lib/apt/lists/*
-
 # Install PHP extensions
 RUN docker-php-ext-install pdo_mysql mbstring exif pcntl bcmath gd
 
 # Install Composer
 RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
 
-# Set working directory
-WORKDIR /var/www
-
 # Copy project files
 COPY . /var/www/
+
+# Kopiuj skompilowane pliki z etapu 1
+COPY --from=frontend-builder /app/public/build /var/www/public/build
 
 # Install Composer dependencies
 RUN composer install --no-dev --optimize-autoloader
 
-# Set permissions for storage and bootstrap/cache
-RUN chmod -R 775 /var/www/storage /var/www/bootstrap/cache
-
-# Install NPM dependencies with verbose output to diagnose issues
-RUN npm install --no-audit --no-fund --production --verbose
-
-# Build assets with verbose output
-RUN npm run build --verbose
-
 # Set permissions
+RUN chmod -R 775 /var/www/storage /var/www/bootstrap/cache
 RUN chown -R www-data:www-data /var/www
 
 # Expose port
@@ -52,10 +44,3 @@ EXPOSE 8000
 
 # Start server
 CMD php artisan serve --host=0.0.0.0 --port=8000
-
-RUN node -v && npm -v
-
-RUN npm config set registry https://registry.npmjs.org/ && \
-    npm install --no-audit --no-fund --verbose
-
-RUN rm -f package-lock.json && npm install --no-audit --no-fund --verbose
