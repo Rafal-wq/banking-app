@@ -8,12 +8,12 @@ RUN apt-get update && apt-get install -y \
     libonig-dev \
     libxml2-dev \
     zip \
-    unzip \
-    nodejs \
-    npm
+    unzip
 
-RUN curl -fsSL https://deb.nodesource.com/setup_20.x | bash - \
-    && apt-get install -y nodejs
+# Install Node.js (używamy nowszej wersji z oficjalnego repo)
+RUN curl -fsSL https://deb.nodesource.com/setup_18.x | bash - \
+    && apt-get install -y nodejs \
+    && npm install -g npm@latest
 
 # Clear cache
 RUN apt-get clean && rm -rf /var/lib/apt/lists/*
@@ -33,8 +33,14 @@ COPY . /var/www/
 # Install Composer dependencies
 RUN composer install --no-dev --optimize-autoloader
 
-# Install NPM dependencies and build assets
-RUN npm install && npm run build
+# Set permissions for storage and bootstrap/cache
+RUN chmod -R 775 /var/www/storage /var/www/bootstrap/cache
+
+# Install NPM dependencies with verbose output to diagnose issues
+RUN npm install --no-audit --no-fund --verbose
+
+# Build assets with verbose output
+RUN npm run build --verbose
 
 # Set permissions
 RUN chown -R www-data:www-data /var/www
