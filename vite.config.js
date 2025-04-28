@@ -10,4 +10,15 @@ export default defineConfig({
         }),
         react(),
     ],
+    resolve: {
+    alias: {
+      '@': '/resources/js',
+    },
+  },
+  plugins: [
+    laravel({
+      input: ['resources/js/app.jsx'],
+      refresh: true,
+    }),
+  ],
 });
