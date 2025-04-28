@@ -11,7 +11,7 @@ RUN apt-get update && apt-get install -y \
     unzip
 
 # Install Node.js (używamy nowszej wersji z oficjalnego repo)
-RUN curl -fsSL https://deb.nodesource.com/setup_18.x | bash - \
+RUN curl -fsSL https://deb.nodesource.com/setup_20.x | bash - \
     && apt-get install -y nodejs \
     && npm install -g npm@latest
 
