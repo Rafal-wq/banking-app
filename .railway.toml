@@ -3,6 +3,7 @@ builder = "dockerfile"
 dockerfile = "Dockerfile"
 
 [deploy]
-startCommand = "php -S 0.0.0.0:$PORT -t public"
+# Użyj niestandardowego skryptu startowego zamiast artisan serve
+startCommand = "/var/www/start.sh"
 healthcheckPath = "/"
 healthcheckTimeout = 300
