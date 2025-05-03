@@ -14,6 +14,7 @@ class TransactionController extends Controller
     /**
      * Display a listing of the user's transactions.
      */
+
     public function index(Request $request)
     {
         $user = $request->user();
@@ -21,14 +22,28 @@ class TransactionController extends Controller
 
         $cacheKey = 'user.'.$user->id.'.transactions';
 
-        $transactions = Cache::remember($cacheKey, now()->addMinutes(5), function () use ($accountIds) {
-            return Transaction::where(function ($query) use ($accountIds) {
+        // Wyczyść cache przy każdym żądaniu, aby zawsze mieć aktualne dane
+        Cache::forget($cacheKey);
+
+        $transactions = Cache::remember($cacheKey, now()->addMinutes(5), function () use ($accountIds, $user) {
+            $transactions = Transaction::where(function ($query) use ($accountIds) {
                 $query->whereIn('from_account_id', $accountIds)
                     ->orWhereIn('to_account_id', $accountIds);
             })
-                ->with(['fromAccount', 'toAccount'])
+                ->with(['fromAccount', 'toAccount']) // Upewniamy się, że relacje są ładowane
                 ->orderBy('created_at', 'desc')
                 ->get();
+
+            // Dodaj flagę, czy transakcja jest wychodząca dla bieżącego użytkownika
+            foreach ($transactions as $transaction) {
+                if ($transaction->title === 'Bonus powitalny' && $transaction->from_account_id === $transaction->to_account_id) {
+                    $transaction->is_outgoing = false;
+                } else {
+                    $transaction->is_outgoing = in_array($transaction->from_account_id, $accountIds);
+                }
+            }
+
+            return $transactions;
         });
 
         return response()->json([
@@ -40,7 +55,6 @@ class TransactionController extends Controller
     /**
      * Store a newly created transaction in storage.
      */
-
     public function store(Request $request)
     {
         $validator = Validator::make($request->all(), [
@@ -90,7 +104,7 @@ class TransactionController extends Controller
         $targetAmount = $sourceAmount;
         $exchangeRate = 1.0;
 
-// Sprawdź, czy potrzebne jest przewalutowanie
+        // Sprawdź, czy potrzebne jest przewalutowanie
         if ($fromAccount->currency !== $toAccount->currency) {
             // Tworzymy instancję serwisu do przewalutowania
             $currencyService = new \App\Services\CurrencyExchangeService();
@@ -118,7 +132,7 @@ class TransactionController extends Controller
                 'from_account_id' => $request->from_account_id,
                 'to_account_id' => $request->to_account_id,
                 'amount' => $sourceAmount, // Zapisujemy kwotę źródłową
-                'target_amount' => $targetAmount, // Dodaj tę linię - zapisujemy kwotę docelową
+                'target_amount' => $targetAmount,
                 'title' => $request->title,
                 'description' => $request->description .
                     // Dodajemy informację o przewalutowaniu, jeśli miało miejsce
@@ -126,9 +140,6 @@ class TransactionController extends Controller
                         " (Przewalutowanie: {$sourceAmount} {$fromAccount->currency} = {$targetAmount} {$toAccount->currency}, kurs: {$exchangeRate})" : ''),
                 'status' => 'pending',
             ]);
-
-            // Modyfikacja wykonania transakcji, aby brać pod uwagę przewalutowanie
-            // Zamiast używać metody execute z modelu Transaction, robimy to ręcznie
 
             // Pobierz środki z konta źródłowego
             $withdrawSuccess = $fromAccount->withdraw($sourceAmount);
@@ -208,6 +219,9 @@ class TransactionController extends Controller
             ], 403);
         }
 
+        // Dodaj flagę isOutgoing do obiektu transakcji
+        $transaction->is_outgoing = in_array($transaction->from_account_id, $userAccountIds);
+
         $transaction->load(['fromAccount', 'toAccount']);
 
         return response()->json([
@@ -255,12 +269,24 @@ class TransactionController extends Controller
 
         $cacheKey = 'account.'.$bankAccount->id.'.transactions';
 
-        $transactions = Cache::remember($cacheKey, now()->addMinutes(5), function () use ($bankAccount) {
-            return Transaction::where('from_account_id', $bankAccount->id)
+        $transactions = Cache::remember($cacheKey, now()->addMinutes(5), function () use ($bankAccount, $user) {
+            $accountIds = $user->bankAccounts()->pluck('id')->toArray();
+            $transactions = Transaction::where('from_account_id', $bankAccount->id)
                 ->orWhere('to_account_id', $bankAccount->id)
                 ->with(['fromAccount', 'toAccount'])
                 ->orderBy('created_at', 'desc')
                 ->get();
+
+            // Dodaj flagę is_outgoing do każdej transakcji
+            foreach ($transactions as $transaction) {
+                if ($transaction->title === 'Bonus powitalny' && $transaction->from_account_id === $transaction->to_account_id) {
+                    $transaction->is_outgoing = false;
+                } else {
+                    $transaction->is_outgoing = in_array($transaction->from_account_id, $accountIds);
+                }
+            }
+
+            return $transactions;
         });
 
         return response()->json([

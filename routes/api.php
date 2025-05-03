@@ -77,6 +77,9 @@ Route::middleware(['auth:sanctum'])->group(function () {
         return $request->user();
     });
 
+    Route::get('/find-account', [TransactionController::class, 'findAccountByNumber'])
+        ->name('api.find-account');
+
     Route::apiResource('transactions', TransactionController::class)->names([
         'index' => 'api.transactions.index',
         'store' => 'api.transactions.store',

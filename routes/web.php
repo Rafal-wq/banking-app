@@ -58,6 +58,10 @@ Route::middleware('auth')->group(function () {
         return Inertia::render('Accounts/Create');
     })->name('accounts.create');
 
+    Route::get('/external-transfer', function () {
+        return Inertia::render('Transactions/ExternalTransfer');
+    })->name('transactions.external');
+
     Route::middleware('guest')->group(function () {
         Route::get('/login', function () {
             // Dodajmy debugging

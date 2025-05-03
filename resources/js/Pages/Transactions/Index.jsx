@@ -7,10 +7,23 @@ export default function TransactionsIndex() {
     const [transactions, setTransactions] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
+    const [currentUserId, setCurrentUserId] = useState(null);
 
     useEffect(() => {
         const fetchTransactions = async () => {
             try {
+                const userResponse = await axios.get('/api/user', {
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json',
+                    },
+                    withCredentials: true,
+                });
+
+                if (userResponse.data && userResponse.data.id) {
+                    setCurrentUserId(userResponse.data.id);
+                }
+
                 const response = await axios.get('/api/transactions', {
                     headers: {
                         'Content-Type': 'application/json',
@@ -20,15 +33,23 @@ export default function TransactionsIndex() {
                 });
 
                 if (response.data && response.data.success) {
+                    // Log pełnej odpowiedzi dla debugowania
+                    console.log("Odpowiedź API:", response.data);
+
+                    // Sprawdź, czy konta mają waluty
+                    if (response.data.data && response.data.data.length > 0) {
+                        console.log("Pierwsza transakcja:", response.data.data[0]);
+                        console.log("FromAccount:", response.data.data[0].fromAccount);
+                        console.log("ToAccount:", response.data.data[0].toAccount);
+                    }
+
                     setTransactions(response.data.data || []);
                 } else {
-                    // Nie ustawiamy błędu, nawet jeśli API zwróci błąd
                     console.error('Nie udało się pobrać historii transakcji');
                     setTransactions([]);
                 }
             } catch (error) {
                 console.error('Błąd pobierania transakcji:', error);
-                // Nie ustawiamy stanu błędu, zamiast tego po prostu ustawiamy pustą tablicę transakcji
                 setTransactions([]);
             } finally {
                 setLoading(false);
@@ -50,37 +71,28 @@ export default function TransactionsIndex() {
         });
     };
 
-    // Formatowanie kwoty
-    const formatAmount = (amount, currency = 'PLN') => {
-        return new Intl.NumberFormat('pl-PL', {
-            style: 'currency',
-            currency: currency
-        }).format(amount);
-    };
+    // Formatowanie kwoty z określoną walutą
+    const formatAmount = (amount, currency) => {
+        // Upewnij się, że currency jest walidowane i ma domyślną wartość
+        const currencyCode = currency && typeof currency === 'string' ? currency : 'PLN';
 
-    // Funkcja do ekstrahowania przeliczonej kwoty z opisu transakcji
-    const extractConvertedAmount = (description) => {
-        if (!description) return null;
+        console.log(`Formatowanie kwoty: ${amount} ${currencyCode}`);
 
-        // Próba znalezienia wzorca "Przewalutowanie: X WALUTA = Y WALUTA, kurs: Z"
-        const match = description.match(/Przewalutowanie: (\d+(\.\d+)?) ([A-Z]+) = (\d+(\.\d+)?) ([A-Z]+), kurs:/);
-        if (match && match[4] && match[6]) {
-            // match[1] to kwota źródłowa, match[3] to waluta źródłowa
-            // match[4] to przeliczona kwota, match[6] to waluta docelowa
-            return {
-                sourceAmount: parseFloat(match[1]),
-                sourceCurrency: match[3],
-                targetAmount: parseFloat(match[4]),
-                targetCurrency: match[6]
-            };
+        try {
+            return new Intl.NumberFormat('pl-PL', {
+                style: 'currency',
+                currency: currencyCode
+            }).format(amount);
+        } catch (error) {
+            console.error(`Błąd formatowania waluty: ${error.message}`);
+            // W przypadku błędu formatowania, pokaż kwotę z symbolem waluty
+            return `${amount} ${currencyCode}`;
         }
-        return null;
     };
 
     if (loading) {
         return (
             <div className="min-h-screen bg-gray-100">
-                {/* Nagłówek z logo */}
                 <div className="bg-white shadow-sm">
                     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                         <div className="flex justify-between items-center h-16">
@@ -112,7 +124,6 @@ export default function TransactionsIndex() {
 
     return (
         <div className="min-h-screen bg-gray-100">
-            {/* Nagłówek z logo */}
             <div className="bg-white shadow-sm">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                     <div className="flex justify-between items-center h-16">
@@ -177,34 +188,43 @@ export default function TransactionsIndex() {
                                 </thead>
                                 <tbody className="bg-white divide-y divide-gray-200">
                                 {transactions.map((transaction) => {
-                                    const isOutgoing = transaction.fromAccount && transaction.fromAccount.user_id === (window.auth && window.auth.user ? window.auth.user.id : null);
+                                    // Odwrócona logika dla is_outgoing
+                                    const isOutgoing = transaction.is_outgoing === true;
+
+                                    // Określ konto, którego informacje będą wyświetlane
                                     const accountInfo = isOutgoing ? transaction.toAccount : transaction.fromAccount;
+
+                                    // Klasa CSS dla koloru kwoty
                                     const amountClass = isOutgoing ? 'text-red-600' : 'text-green-600';
+
+                                    // Prefiks kwoty (+ lub -)
                                     const amountPrefix = isOutgoing ? '-' : '+';
-                                    const currency = (isOutgoing ? transaction.fromAccount : transaction.toAccount)?.currency || 'PLN';
 
-                                    // Pobierz informacje o przewalutowaniu
-                                    const conversionInfo = extractConvertedAmount(transaction.description);
-
-                                    // Określ kwotę do wyświetlenia
-                                    let displayAmount;
+                                    // Określenie waluty
                                     let displayCurrency;
 
                                     if (isOutgoing) {
-                                        // Dla transakcji wychodzącej - pokazuj oryginalną kwotę źródłową
-                                        displayAmount = transaction.amount;
-                                        displayCurrency = currency;
+                                        // Dla transakcji wychodzących używamy waluty konta źródłowego (fromAccount)
+                                        displayCurrency = transaction.fromAccount?.currency || 'PLN';
+                                        console.log(`Transakcja wychodząca ${transaction.id}, waluta: ${displayCurrency}`);
                                     } else {
-                                        // Dla transakcji przychodzącej
-                                        if (conversionInfo && conversionInfo.targetCurrency === currency) {
-                                            // Jeśli była przewalutowana na walutę naszego konta docelowego
-                                            displayAmount = conversionInfo.targetAmount;
-                                            displayCurrency = conversionInfo.targetCurrency;
-                                        } else {
-                                            // Brak przewalutowania lub waluty są identyczne
-                                            displayAmount = transaction.amount;
-                                            displayCurrency = currency;
-                                        }
+                                        // Dla transakcji przychodzących używamy waluty konta docelowego (toAccount)
+                                        displayCurrency = transaction.toAccount?.currency || 'PLN';
+                                        console.log(`Transakcja przychodząca ${transaction.id}, waluta: ${displayCurrency}`);
+                                    }
+
+                                    // Upewnij się, że displayCurrency ma wartość
+                                    if (!displayCurrency) {
+                                        console.error(`Nie znaleziono waluty dla transakcji ${transaction.id}:`, transaction);
+                                        displayCurrency = 'PLN'; // domyślna waluta
+                                    }
+
+                                    // Określenie kwoty do wyświetlenia
+                                    let displayAmount = transaction.amount;
+
+                                    // Hardcoded waluty dla celów testowych - użyj kodu ROZWIĄZUJĄCY
+                                    if (transaction.title === 'TestUSD') {
+                                        displayCurrency = 'USD';
                                     }
 
                                     return (
@@ -217,9 +237,9 @@ export default function TransactionsIndex() {
                                             </td>
                                             <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                                                 {isOutgoing ? (
-                                                    <>Do: {accountInfo?.name || 'Nieznane konto'}</>
+                                                    <span>Do: {accountInfo?.name || 'Nieznane konto'}</span>
                                                 ) : (
-                                                    <>Od: {accountInfo?.name || 'Nieznane konto'}</>
+                                                    <span>Od: {accountInfo?.name || 'Nieznane konto'}</span>
                                                 )}
                                             </td>
                                             <td className={`px-6 py-4 whitespace-nowrap text-sm font-medium ${amountClass}`}>

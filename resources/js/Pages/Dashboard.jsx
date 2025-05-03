@@ -166,7 +166,16 @@ export default function Dashboard() {
                             className="p-4 border rounded text-center hover:bg-gray-50 transition"
                         >
                             <div className="font-semibold">Wykonaj przelew</div>
-                            <p className="text-sm text-gray-600">Prześlij pieniądze na inne konto</p>
+                            <p className="text-sm text-gray-600">Prześlij pieniądze na swoje konto</p>
+                        </Link>
+
+                        {/* Nowy link do przelewów zewnętrznych */}
+                        <Link
+                            href="/external-transfer"
+                            className="p-4 border rounded text-center hover:bg-gray-50 transition"
+                        >
+                            <div className="font-semibold">Przelew zewnętrzny</div>
+                            <p className="text-sm text-gray-600">Prześlij pieniądze na konto innego użytkownika</p>
                         </Link>
 
                         <Link

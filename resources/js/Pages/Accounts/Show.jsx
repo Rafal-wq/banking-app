@@ -109,7 +109,7 @@ export default function AccountDetails({ id }) {
                                 href="/dashboard"
                                 className="px-4 py-2 bg-gray-600 text-white rounded hover:bg-gray-700 transition"
                             >
-                                Powrót do dashboardu
+                                Powrót do panelu
                             </Link>
                         </div>
                     </div>
@@ -140,7 +140,7 @@ export default function AccountDetails({ id }) {
                                 href="/dashboard"
                                 className="px-4 py-2 bg-gray-600 text-white rounded hover:bg-gray-700 transition"
                             >
-                                Powrót do dashboardu
+                                Powrót do panelu
                             </Link>
                         </div>
                     </div>
@@ -169,7 +169,7 @@ export default function AccountDetails({ id }) {
                             href="/dashboard"
                             className="px-4 py-2 bg-gray-600 text-white rounded hover:bg-gray-700 transition"
                         >
-                            Powrót do dashboardu
+                            Powrót do panelu
                         </Link>
                     </div>
                 </div>
@@ -205,7 +205,14 @@ export default function AccountDetails({ id }) {
                             href={`/transactions/create?from_account_id=${account.id}`}
                             className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition"
                         >
-                            Wykonaj przelew
+                            Przelew wewnętrzny
+                        </Link>
+                        {/* Nowy przycisk do przelewów zewnętrznych */}
+                        <Link
+                            href={`/external-transfer?from_account_id=${account.id}`}
+                            className="px-4 py-2 bg-purple-600 text-white rounded hover:bg-purple-700 transition"
+                        >
+                            Przelew zewnętrzny
                         </Link>
                         <Link
                             href={`/accounts/${account.id}/deposit`}
