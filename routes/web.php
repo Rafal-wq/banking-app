@@ -87,6 +87,10 @@ Route::middleware('auth')->group(function () {
     })->name('transactions.index');
 });
 
+Route::get('/transactions/{id}', function ($id) {
+    return Inertia::render('Transactions/Show', ['id' => $id]);
+})->name('transactions.show')->middleware('auth');
+
 Route::get('/session-test', function (Request $request) {
     return [
         'user' => auth()->user(),
