@@ -1,9 +1,0 @@
-[build]
-builder = "dockerfile"
-dockerfile = "Dockerfile"
-
-[deploy]
-# Użyj niestandardowego skryptu startowego zamiast artisan serve
-startCommand = ""
-healthcheckPath = "/"
-healthcheckTimeout = 300
