@@ -3,6 +3,6 @@ builder = "nixpacks"
 buildCommand = "composer install --no-dev && php artisan key:generate --force && npm install && npm run build"
 
 [deploy]
-startCommand = "php artisan config:cache && php artisan route:cache && php -S 0.0.0.0:8000 -t public"
-healthcheckPath = "/api/auth-check"
+startCommand = "php artisan migrate --force && php -S 0.0.0.0:8000 -t public"
+healthcheckPath = "/"
 healthcheckTimeout = 100
