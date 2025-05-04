@@ -1,8 +1,8 @@
 <?php
-// Zapisz jako railway-server.php w głównym katalogu projektu
+// Poprawiony skrypt railway-server.php dla deploymentu na Railway
 
-// Pobierz port z zmiennej środowiskowej lub użyj domyślnego 8000
-$port = getenv('PORT') ?: 8000;
+// Pobierz PORT z zmiennej środowiskowej z fallbackiem na 8000
+$port = getenv('PORT') ? getenv('PORT') : 8000;
 
 echo "Starting server on port {$port}...\n";
 
