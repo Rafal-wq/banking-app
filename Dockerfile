@@ -9,22 +9,12 @@ RUN docker-php-ext-install pdo pdo_mysql
 COPY --from=build /app /var/www/html
 WORKDIR /var/www/html
 
-# Utwórz plik .env jeśli nie istnieje
 RUN touch .env
 
-# Ustaw odpowiednie uprawnienia
 RUN chmod 777 -R /var/www/html/storage/ && \
     chown -R www-data:www-data /var/www/html
 
-# Utwórz skrypt startowy dla Railway
-RUN echo '#!/bin/bash\nphp -S 0.0.0.0:${PORT:-8000} -t public' > /var/www/html/start.sh && \
-    chmod +x /var/www/html/start.sh
+EXPOSE 8000
 
-# Domyślny port
-ENV PORT=8000
-
-# Railway będzie nadpisywał tę zmienną
-EXPOSE $PORT
-
-# Użyj skryptu powłoki
-CMD php -S 0.0.0.0:$PORT -t public
+# Kluczowa zmiana - użyj exec w CMD
+CMD exec php -S 0.0.0.0:$PORT -t public
