@@ -27,4 +27,4 @@ ENV PORT=8000
 EXPOSE $PORT
 
 # Użyj skryptu powłoki
-CMD ["/bin/bash", "/var/www/html/start.sh"]
+CMD php -S 0.0.0.0:$PORT -t public
