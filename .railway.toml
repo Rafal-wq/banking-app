@@ -4,6 +4,6 @@ dockerfile = "Dockerfile"
 
 [deploy]
 # Użyj niestandardowego skryptu startowego zamiast artisan serve
-startCommand = "php railway-server.php"
+startCommand = ""
 healthcheckPath = "/"
 healthcheckTimeout = 300
