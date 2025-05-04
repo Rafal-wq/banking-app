@@ -9,6 +9,7 @@ cmds = [
 
 [phases.build]
 cmds = [
+    "touch .env",
   "php artisan key:generate --force",
   "npm run build"
 ]
