@@ -36,6 +36,27 @@ Route::middleware('guest')->group(function () {
     })->name('register');
 });
 
+Route::get('/db-test', function () {
+    try {
+        // Sprawdź połączenie z bazą danych
+        DB::connection()->getPdo();
+
+        // Wylistuj wszystkie tabele
+        $tables = DB::select('SHOW TABLES');
+
+        return [
+            'status' => 'success',
+            'message' => 'Połączono z bazą: ' . DB::connection()->getDatabaseName(),
+            'tables' => $tables
+        ];
+    } catch (\Exception $e) {
+        return [
+            'status' => 'error',
+            'message' => 'Nie można połączyć się z bazą. Błąd: ' . $e->getMessage()
+        ];
+    }
+});
+
 Route::get('/exchange', function () {
     return Inertia::render('Exchange');
 })->name('exchange');
