@@ -1,8 +1,8 @@
 [build]
 builder = "nixpacks"
-buildCommand = "composer install --no-dev && php artisan key:generate --force && npm install && npm run build"
+buildCommand = "composer install && php artisan key:generate --force && npm install && npm run build"
 
 [deploy]
-startCommand = "php artisan migrate --force && php -S 0.0.0.0:8000 -t public"
-healthcheckPath = "/"
-healthcheckTimeout = 100
+startCommand = "echo 'DB Config:' && php artisan config:get database && php artisan migrate --force --no-interaction --verbose && php -S 0.0.0.0:8000 -t public"
+# Usuń healthcheckPath i healthcheckTimeout całkowicie
+restartPolicyType = "on_failure"
