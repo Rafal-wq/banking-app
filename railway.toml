@@ -1,7 +1,7 @@
 [build]
 builder = "nixpacks"
-buildCommand = "composer install && npm install && npm run build"
+buildCommand = "composer install --optimize-autoloader --no-dev && npm install && npm run build"
 
 [deploy]
-startCommand = "php artisan config:clear && php artisan cache:clear && php artisan key:generate --force && php artisan migrate:fresh --force --seed && php -S 0.0.0.0:8080 -t public"
+startCommand = "php artisan migrate:fresh --force --seed && php -S 0.0.0.0:8000 -t public"
 restartPolicyType = "on_failure"
