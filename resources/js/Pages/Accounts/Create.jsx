@@ -4,7 +4,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link, router } from '@inertiajs/react';
 import axios from 'axios';
-import BankLogo from '@/components/BankLogo';
+import BankLogo from '@/Components/BankLogo';
 
 export default function CreateAccount() {
     const [formData, setFormData] = useState({

@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from '@inertiajs/react';
 import axios from 'axios';
-import BankLogo from '@/components/BankLogo';
-import InputLabel from '@/components/InputLabel';
-import TextInput from '@/components/TextInput';
-import PrimaryButton from '@/components/PrimaryButton';
+import BankLogo from '@/Components/BankLogo';
+import InputLabel from '@/Components/InputLabel';
+import TextInput from '@/Components/TextInput';
+import PrimaryButton from '@/Components/PrimaryButton';
 
 export default function Exchange() {
     // Stan dla kont i kursów walut

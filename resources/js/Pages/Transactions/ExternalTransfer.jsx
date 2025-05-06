@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from '@inertiajs/react';
 import axios from 'axios';
-import TextInput from '@/components/TextInput';
-import InputLabel from '@/components/InputLabel';
-import PrimaryButton from '@/components/PrimaryButton';
-import InputError from '@/components/InputError';
-import BankLogo from '@/components/BankLogo';
+import TextInput from '@/Components/TextInput';
+import InputLabel from '@/Components/InputLabel';
+import PrimaryButton from '@/Components/PrimaryButton';
+import InputError from '@/Components/InputError';
+import BankLogo from '@/Components/BankLogo';
 
 export default function ExternalTransfer() {
     const [accounts, setAccounts] = useState([]);

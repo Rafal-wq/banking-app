@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Head, Link } from '@inertiajs/react';
 import axios from "axios";
-import BankLogo from '@/components/BankLogo';
+import BankLogo from '@/Components/BankLogo';
 
 export default function Register() {
     const [formData, setFormData] = useState({

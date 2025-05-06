@@ -1,5 +1,5 @@
-import BankLogo from '@/components/BankLogo.jsx';  // Zmień ten import
-import ApplicationLogo from "@/components/ApplicationLogo.jsx";
+import BankLogo from '@/Components/BankLogo.jsx';  // Zmień ten import
+import ApplicationLogo from "@/Components/ApplicationLogo.jsx";
 import { Link } from '@inertiajs/react';
 
 export default function GuestLayout({ children }) {

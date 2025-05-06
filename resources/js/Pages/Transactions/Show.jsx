@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { Link, } from '@inertiajs/react';
 import axios from 'axios';
-import BankLogo from '@/components/BankLogo';
-import PrimaryButton from '@/components/PrimaryButton';
+import BankLogo from '@/Components/BankLogo';
+import PrimaryButton from '@/Components/PrimaryButton';
 
 export default function Show({ id }) {
     console.log("Component Show rendered with ID:", id);

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from '@inertiajs/react';
 import axios from 'axios';
-import BankLogo from '@/components/BankLogo';
+import BankLogo from '@/Components/BankLogo';
 
 export default function AccountDetails({ id }) {
     const [account, setAccount] = useState(null);

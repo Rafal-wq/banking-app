@@ -1,6 +1,6 @@
 import { Head, Link } from '@inertiajs/react';
 import { useEffect, useState } from 'react';
-import BankLogo from '@/components/BankLogo';
+import BankLogo from '@/Components/BankLogo';
 
 export default function Welcome({ canLogin, canRegister, laravelVersion, phpVersion, stockData, currencyRates }) {
     const [currentDateTime, setCurrentDateTime] = useState(new Date());

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import BankLogo from '@/components/BankLogo';
+import BankLogo from '@/Components/BankLogo';
 
 export default function Edit(props) {
     // Stan komponentu
