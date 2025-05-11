@@ -6,6 +6,5 @@ IF EXIST "C:\Windows\System32" (
     powershell.exe -ExecutionPolicy Bypass -File .\init.ps1
 ) ELSE (
     echo Wykryto Unix/macOS
-    chmod +x ./init.sh
-    ./init.sh
+    bash ./init.sh
 )
