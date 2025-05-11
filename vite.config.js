@@ -15,7 +15,7 @@ export default defineConfig({
         port: 5173,
         strictPort: true,
         cors: {
-            origin: '*', // W środowisku deweloperskim zezwalam na wszystkie pochodzenia
+            origin: '*',
             methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
             allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
             credentials: true,
