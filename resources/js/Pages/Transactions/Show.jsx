@@ -67,13 +67,23 @@ export default function Show({ id }) {
         });
     };
 
-    const formatCurrency = (amount, currency = 'PLN') => {
+    const formatCurrency = (amount, currency) => {
         if (amount === undefined || amount === null) return 'Brak danych';
 
-        return new Intl.NumberFormat('pl-PL', {
-            style: 'currency',
-            currency: currency
-        }).format(amount);
+        // Upewnij się, że currency ma wartość i jest to poprawny kod waluty
+        if (!currency || typeof currency !== 'string' || currency.length !== 3) {
+            currency = 'PLN'; // Domyślna waluta, jeśli nie podano poprawnej
+        }
+
+        try {
+            return new Intl.NumberFormat('pl-PL', {
+                style: 'currency',
+                currency: currency
+            }).format(amount);
+        } catch (error) {
+            console.error('Błąd formatowania waluty:', error);
+            return `${amount} ${currency}`;
+        }
     };
 
     const getStatusLabel = (status) => {
@@ -265,20 +275,38 @@ export default function Show({ id }) {
 
                                     <div>
                                         <p className="text-sm text-gray-500">Kwota</p>
-                                        <p className="text-xl font-bold">{formatCurrency(transaction.amount, sourceAccount ? sourceAccount.currency : 'PLN')}</p>
+                                        <p className="text-xl font-bold">{formatCurrency(
+                                            transaction.amount,
+                                            sourceAccount ? sourceAccount.currency : (
+                                                conversionInfo ? conversionInfo.sourceCurrency : 'PLN'
+                                            )
+                                        )}</p>
                                     </div>
 
-                                    {transaction.target_amount && transaction.target_amount !== transaction.amount && (
+                                    {/* Warunek dla kwoty po przewalutowaniu */}
+                                    {((transaction.target_amount && transaction.target_amount !== transaction.amount) || conversionInfo) && (
                                         <div>
                                             <p className="text-sm text-gray-500">Kwota po przewalutowaniu</p>
-                                            <p className="text-lg font-semibold">{formatCurrency(transaction.target_amount, destinationAccount ? destinationAccount.currency : 'PLN')}</p>
+                                            <p className="text-lg font-semibold">{formatCurrency(
+                                                transaction.target_amount || (conversionInfo ? conversionInfo.targetAmount : 0),
+                                                destinationAccount ? destinationAccount.currency : (
+                                                    conversionInfo ? conversionInfo.targetCurrency : 'PLN'
+                                                )
+                                            )}</p>
                                         </div>
                                     )}
 
-                                    {conversionInfo && (
+                                    {(conversionInfo || exchangeRate) && (
                                         <div>
                                             <p className="text-sm text-gray-500">Kurs wymiany</p>
-                                            <p className="font-medium">1 {conversionInfo.sourceCurrency} = {conversionInfo.exchangeRate} {conversionInfo.targetCurrency}</p>
+                                            <p className="font-medium">
+                                                1 {conversionInfo ? conversionInfo.sourceCurrency :
+                                                (sourceAccount ? sourceAccount.currency : 'GBP')} = {
+                                                conversionInfo ? conversionInfo.exchangeRate :
+                                                    (exchangeRate || '1.00')} {
+                                                conversionInfo ? conversionInfo.targetCurrency :
+                                                    (destinationAccount ? destinationAccount.currency : 'USD')}
+                                            </p>
                                         </div>
                                     )}
 
