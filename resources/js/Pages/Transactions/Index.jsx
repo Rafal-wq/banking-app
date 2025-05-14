@@ -5,14 +5,17 @@ import BankLogo from '@/Components/BankLogo';
 
 export default function TransactionsIndex() {
     const [transactions, setTransactions] = useState([]);
+    const [accounts, setAccounts] = useState([]);
+    const [accountsMap, setAccountsMap] = useState({});
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
-    const [currentUserId, setCurrentUserId] = useState(null);
+    const [selectedAccountId, setSelectedAccountId] = useState('all');
 
     useEffect(() => {
-        const fetchTransactions = async () => {
+        const fetchData = async () => {
             try {
-                const userResponse = await axios.get('/api/user', {
+                // Najpierw pobieramy wszystkie konta użytkownika
+                const accountsResponse = await axios.get('/api/bank-accounts', {
                     headers: {
                         'Content-Type': 'application/json',
                         'Accept': 'application/json',
@@ -20,10 +23,22 @@ export default function TransactionsIndex() {
                     withCredentials: true,
                 });
 
-                if (userResponse.data && userResponse.data.id) {
-                    setCurrentUserId(userResponse.data.id);
+                let userAccounts = [];
+                let accountsMapObj = {};
+
+                if (accountsResponse.data && accountsResponse.data.success) {
+                    userAccounts = accountsResponse.data.data || [];
+
+                    // Tworzymy mapę kont dla szybkiego dostępu
+                    userAccounts.forEach(account => {
+                        accountsMapObj[account.id] = account;
+                    });
+
+                    setAccounts(userAccounts);
+                    setAccountsMap(accountsMapObj);
                 }
 
+                // Potem pobieramy transakcje
                 const response = await axios.get('/api/transactions', {
                     headers: {
                         'Content-Type': 'application/json',
@@ -33,31 +48,49 @@ export default function TransactionsIndex() {
                 });
 
                 if (response.data && response.data.success) {
-                    // Log pełnej odpowiedzi dla debugowania
-                    console.log("Odpowiedź API:", response.data);
+                    // Uzupełniamy informacje o walutach w transakcjach na podstawie mapy kont
+                    const processedTransactions = response.data.data.map(transaction => {
+                        const fromAccountId = transaction.from_account_id;
+                        const toAccountId = transaction.to_account_id;
 
-                    // Sprawdź, czy konta mają waluty
-                    if (response.data.data && response.data.data.length > 0) {
-                        console.log("Pierwsza transakcja:", response.data.data[0]);
-                        console.log("FromAccount:", response.data.data[0].fromAccount);
-                        console.log("ToAccount:", response.data.data[0].toAccount);
-                    }
+                        // Pobierz waluty bezpośrednio z naszej mapy kont
+                        const fromAccountCurrency = accountsMapObj[fromAccountId]?.currency || 'PLN';
+                        const toAccountCurrency = accountsMapObj[toAccountId]?.currency || 'PLN';
 
-                    setTransactions(response.data.data || []);
+                        // Dodaj informacje o walutach do obiektu transakcji
+                        transaction.fromAccountCurrency = fromAccountCurrency;
+                        transaction.toAccountCurrency = toAccountCurrency;
+
+                        return transaction;
+                    });
+
+                    setTransactions(processedTransactions);
                 } else {
                     console.error('Nie udało się pobrać historii transakcji');
                     setTransactions([]);
                 }
             } catch (error) {
-                console.error('Błąd pobierania transakcji:', error);
-                setTransactions([]);
+                console.error('Błąd pobierania danych:', error);
+                setError('Wystąpił błąd podczas ładowania danych. Spróbuj ponownie później.');
             } finally {
                 setLoading(false);
             }
         };
 
-        fetchTransactions();
+        fetchData();
     }, []);
+
+    // Funkcja do filtrowania transakcji według wybranego konta
+    const getFilteredTransactions = () => {
+        if (selectedAccountId === 'all') {
+            return transactions;
+        }
+
+        return transactions.filter(transaction =>
+            transaction.from_account_id.toString() === selectedAccountId ||
+            transaction.to_account_id.toString() === selectedAccountId
+        );
+    };
 
     // Formatowanie daty
     const formatDate = (dateString) => {
@@ -76,8 +109,6 @@ export default function TransactionsIndex() {
         // Upewnij się, że currency jest walidowane i ma domyślną wartość
         const currencyCode = currency && typeof currency === 'string' ? currency : 'PLN';
 
-        console.log(`Formatowanie kwoty: ${amount} ${currencyCode}`);
-
         try {
             return new Intl.NumberFormat('pl-PL', {
                 style: 'currency',
@@ -88,6 +119,10 @@ export default function TransactionsIndex() {
             // W przypadku błędu formatowania, pokaż kwotę z symbolem waluty
             return `${amount} ${currencyCode}`;
         }
+    };
+
+    const handleAccountChange = (e) => {
+        setSelectedAccountId(e.target.value);
     };
 
     if (loading) {
@@ -122,6 +157,8 @@ export default function TransactionsIndex() {
         );
     }
 
+    const filteredTransactions = getFilteredTransactions();
+
     return (
         <div className="min-h-screen bg-gray-100">
             <div className="bg-white shadow-sm">
@@ -143,24 +180,45 @@ export default function TransactionsIndex() {
 
             <div className="p-6 max-w-7xl mx-auto">
                 <div className="bg-white rounded-lg shadow p-6">
-                    <div className="flex justify-between items-center mb-6">
-                        <h1 className="text-2xl font-bold text-gray-800">Historia transakcji</h1>
-                        <Link
-                            href="/transactions/create"
-                            className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition"
-                        >
-                            Nowy przelew
-                        </Link>
+                    <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-6">
+                        <h1 className="text-2xl font-bold text-gray-800 mb-4 md:mb-0">Historia transakcji</h1>
+
+                        <div className="flex flex-col sm:flex-row gap-4">
+                            {/* Selektor kont */}
+                            <div className="flex-grow">
+                                <select
+                                    value={selectedAccountId}
+                                    onChange={handleAccountChange}
+                                    className="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                                >
+                                    <option value="all">Wszystkie konta</option>
+                                    {accounts.map(account => (
+                                        <option key={account.id} value={account.id}>
+                                            {account.name} ({account.currency})
+                                        </option>
+                                    ))}
+                                </select>
+                            </div>
+
+                            <Link
+                                href="/transactions/create"
+                                className="inline-flex items-center justify-center px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition"
+                            >
+                                Nowy przelew
+                            </Link>
+                        </div>
                     </div>
 
-                    {transactions.length === 0 ? (
+                    {filteredTransactions.length === 0 ? (
                         <div className="text-center py-16 bg-gray-50 rounded-lg border border-gray-200">
                             <svg className="mx-auto h-16 w-16 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
                             </svg>
                             <h2 className="mt-4 text-xl font-semibold text-gray-700">Brak historii transakcji</h2>
                             <p className="mt-2 text-gray-500 max-w-md mx-auto">
-                                Nie masz jeszcze żadnych transakcji. Wykonaj swój pierwszy przelew, aby rozpocząć budowanie historii transakcji.
+                                {selectedAccountId === 'all'
+                                    ? 'Nie masz jeszcze żadnych transakcji. Wykonaj swój pierwszy przelew, aby rozpocząć budowanie historii transakcji.'
+                                    : 'Nie masz jeszcze żadnych transakcji dla wybranego konta.'}
                             </p>
                             <div className="mt-6">
                                 <Link
@@ -187,44 +245,40 @@ export default function TransactionsIndex() {
                                 </tr>
                                 </thead>
                                 <tbody className="bg-white divide-y divide-gray-200">
-                                {transactions.map((transaction) => {
-                                    // Odwrócona logika dla is_outgoing
+                                {filteredTransactions.map((transaction) => {
+                                    // Ustal, czy transakcja jest wychodząca
                                     const isOutgoing = transaction.is_outgoing === true;
 
-                                    // Określ konto, którego informacje będą wyświetlane
-                                    const accountInfo = isOutgoing ? transaction.toAccount : transaction.fromAccount;
+                                    // Ustal konto, które będzie wyświetlane w kolumnie "Z / Na konto"
+                                    const accountInfo = isOutgoing ?
+                                        (transaction.toAccount || accountsMap[transaction.to_account_id] || {}) :
+                                        (transaction.fromAccount || accountsMap[transaction.from_account_id] || {});
 
-                                    // Klasa CSS dla koloru kwoty
+                                    // Ustal klasę dla koloru kwoty
                                     const amountClass = isOutgoing ? 'text-red-600' : 'text-green-600';
 
-                                    // Prefiks kwoty (+ lub -)
+                                    // Ustal prefiks kwoty
                                     const amountPrefix = isOutgoing ? '-' : '+';
 
-                                    // Określenie waluty
+                                    // Ustal walutę do wyświetlenia
                                     let displayCurrency;
 
                                     if (isOutgoing) {
-                                        // Dla transakcji wychodzących używamy waluty konta źródłowego (fromAccount)
-                                        displayCurrency = transaction.fromAccount?.currency || 'PLN';
-                                        console.log(`Transakcja wychodząca ${transaction.id}, waluta: ${displayCurrency}`);
+                                        // Dla transakcji wychodzących używamy waluty konta źródłowego
+                                        displayCurrency = transaction.fromAccountCurrency || accountsMap[transaction.from_account_id]?.currency || 'PLN';
                                     } else {
-                                        // Dla transakcji przychodzących używamy waluty konta docelowego (toAccount)
-                                        displayCurrency = transaction.toAccount?.currency || 'PLN';
-                                        console.log(`Transakcja przychodząca ${transaction.id}, waluta: ${displayCurrency}`);
+                                        // Dla transakcji przychodzących używamy waluty konta docelowego
+                                        displayCurrency = transaction.toAccountCurrency || accountsMap[transaction.to_account_id]?.currency || 'PLN';
                                     }
 
-                                    // Upewnij się, że displayCurrency ma wartość
-                                    if (!displayCurrency) {
-                                        console.error(`Nie znaleziono waluty dla transakcji ${transaction.id}:`, transaction);
-                                        displayCurrency = 'PLN'; // domyślna waluta
-                                    }
-
-                                    // Określenie kwoty do wyświetlenia
-                                    let displayAmount = transaction.amount;
-
-                                    // Hardcoded waluty dla celów testowych - użyj kodu ROZWIĄZUJĄCY
+                                    // Dla transakcji w USD (z tytułem TestUSD), używaj USD
                                     if (transaction.title === 'TestUSD') {
                                         displayCurrency = 'USD';
+                                    }
+
+                                    // Jeśli jesteśmy w widoku konkretnego konta, użyj jego waluty
+                                    if (selectedAccountId !== 'all') {
+                                        displayCurrency = accountsMap[parseInt(selectedAccountId)]?.currency || displayCurrency;
                                     }
 
                                     return (
@@ -243,7 +297,7 @@ export default function TransactionsIndex() {
                                                 )}
                                             </td>
                                             <td className={`px-6 py-4 whitespace-nowrap text-sm font-medium ${amountClass}`}>
-                                                {amountPrefix}{formatAmount(displayAmount, displayCurrency)}
+                                                {amountPrefix}{formatAmount(transaction.amount, displayCurrency)}
                                             </td>
                                             <td className="px-6 py-4 whitespace-nowrap text-sm">
                                                 <span className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${
