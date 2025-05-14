@@ -120,7 +120,19 @@ export default function ExternalTransfer() {
         setIsSubmitting(true);
 
         try {
-            const response = await axios.post('/api/transactions', formData, {
+            // Przygotowanie danych do wysłania
+            // Ważne: używamy id znalezionego konta, a nie numeru konta
+            const transactionData = {
+                from_account_id: formData.from_account_id,
+                to_account_id: foundAccount.id, // Używamy ID znalezionego konta
+                amount: formData.amount,
+                title: formData.title,
+                description: formData.description,
+            };
+
+            console.log("Sending transaction data:", transactionData);
+
+            const response = await axios.post('/api/transactions', transactionData, {
                 headers: {
                     'Content-Type': 'application/json',
                     'Accept': 'application/json',

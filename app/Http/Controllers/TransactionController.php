@@ -294,4 +294,58 @@ class TransactionController extends Controller
             'data' => $transactions,
         ]);
     }
+
+    /**
+     * Wyszukuje konto bankowe po numerze konta.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function findAccountByNumber(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'account_number' => 'required|string|min:5',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'errors' => $validator->errors(),
+            ], 422);
+        }
+
+        $accountNumber = $request->account_number;
+
+        try {
+            // Wyszukaj konto po numerze, ale nie zwracaj kont należących do zalogowanego użytkownika
+            $account = BankAccount::where('account_number', $accountNumber)
+                ->where('user_id', '!=', auth()->id())
+                ->with('user:id,name')
+                ->first();
+
+            if (!$account) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Nie znaleziono konta o podanym numerze.'
+                ], 404);
+            }
+
+            // Zwróć podstawowe informacje o koncie (bez ujawniania wrażliwych danych)
+            return response()->json([
+                'success' => true,
+                'data' => [
+                    'id' => $account->id,
+                    'name' => $account->name,
+                    'account_number' => $account->account_number,
+                    'currency' => $account->currency,
+                    'user_name' => $account->user->name,
+                ]
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Wystąpił błąd podczas wyszukiwania konta: ' . $e->getMessage()
+            ], 500);
+        }
+    }
 }
