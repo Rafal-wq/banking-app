@@ -1,0 +1,33 @@
+<invoke name="artifacts">
+<parameter name="command">create</parameter>
+<parameter name="id">app-yaml</parameter>
+<parameter name="type">application/vnd.ant.code</parameter>
+<parameter name="title">.do/app.yaml</parameter>
+<parameter name="content">name: banking-app
+services:
+- name: web
+  github:
+    repo: [your-github-repo]
+    branch: main
+    deploy_on_push: true
+  build_command: |
+    npm install
+    npm run build
+    composer install --optimize-autoloader --no-dev
+  run_command: heroku-php-apache2 public/
+  envs:
+  - key: APP_ENV
+    value: production
+  - key: APP_DEBUG
+    value: false
+  - key: APP_URL
+    scope: RUN_AND_BUILD_TIME
+    value: ${APP_URL}
+  - key: LOG_CHANNEL
+    value: stderr
+  routes:
+  - path: /
+  health_check:
+    http_path: /
+</parameter>
+</invoke>
