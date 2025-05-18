@@ -67,6 +67,22 @@ services:
         networks:
             - bank-network
 
+    # phpMyAdmin dla zarządzania bazą danych
+    phpmyadmin:
+        image: phpmyadmin/phpmyadmin
+        container_name: bank-phpmyadmin
+        restart: unless-stopped
+        environment:
+            PMA_HOST: mysql
+            PMA_PORT: 3306
+            MYSQL_ROOT_PASSWORD: ${DB_PASSWORD:-secret}
+        ports:
+            - "8080:80"
+        networks:
+            - bank-network
+        depends_on:
+            - mysql
+
 networks:
     bank-network:
         driver: bridge
