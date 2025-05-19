@@ -8,6 +8,8 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\DB;
+use App\Mail\TransactionNotification;
+use Illuminate\Support\Facades\Mail;
 
 class TransactionController extends Controller
 {
@@ -153,6 +155,17 @@ class TransactionController extends Controller
                     $transaction->status = 'completed';
                     $transaction->executed_at = now();
                     $transaction->save();
+                    $transaction->load(['fromAccount', 'toAccount']);
+
+                    if ($fromAccount->user && $fromAccount->user->email) {
+                        Mail::to($fromAccount->user->email)
+                            ->send(new TransactionNotification($transaction, true));
+                    }
+
+                    if ($toAccount->user && $toAccount->user->email) {
+                        Mail::to($toAccount->user->email)
+                            ->send(new TransactionNotification($transaction, false));
+                    }
 
                     DB::commit();
 

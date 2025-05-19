@@ -6,7 +6,10 @@ use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\Mail;
 use Inertia\Inertia;
+use App\Mail\TransactionNotification;
+use Illuminate\Http\Request;
 
 Route::get('/', function () {
     $financialService = new \App\Services\FinancialDataService();
@@ -61,7 +64,7 @@ Route::get('/run-migrations', function () {
             'connection_status' => $pdo->getAttribute(\PDO::ATTR_CONNECTION_STATUS),
         ];
 
-        // Sprawdź czy tabela migracji istnieje
+        // Sprawdź, czy tabela migracji istnieje
         try {
             $migrationTableExists = DB::select("SHOW TABLES LIKE 'migrations'");
         } catch (\Exception $e) {
@@ -120,7 +123,41 @@ Route::get('/db-test', function () {
     }
 });
 
-// [Pozostała część pliku zostaje bez zmian]
+// Endpoint testowy do wysyłania maili
+Route::get('/mail-test', function (Request $request) {
+    // Jeśli użytkownik nie jest zalogowany, używamy testowego adresu email
+    $email = Auth::check() ? Auth::user()->email : 'test@example.com';
+
+    // Stwórz testową transakcję
+    $transaction = new \App\Models\Transaction();
+    $transaction->id = 9999;
+    $transaction->from_account_id = 1;
+    $transaction->to_account_id = 2;
+    $transaction->amount = 100.00;
+    $transaction->target_amount = 100.00;
+    $transaction->title = "Testowa transakcja";
+    $transaction->description = "Test systemu mailowego";
+    $transaction->status = "completed";
+    $transaction->executed_at = now();
+    $transaction->created_at = now();
+
+    // Symulowane relacje
+    $fromAccount = new \stdClass();
+    $fromAccount->name = "Moje konto";
+    $fromAccount->currency = "PLN";
+
+    $toAccount = new \stdClass();
+    $toAccount->name = "Konto docelowe";
+    $toAccount->currency = "PLN";
+
+    $transaction->fromAccount = $fromAccount;
+    $transaction->toAccount = $toAccount;
+
+    // Wysyłka maila
+    Mail::to($email)->send(new TransactionNotification($transaction, true));
+
+    return "Mail testowy został wysłany na adres: " . $email;
+})->name('mail.test');
 
 Route::get('/dashboard', function () {
     return Inertia::render('Dashboard', [
@@ -205,5 +242,42 @@ Route::get('/session-test', function (Request $request) {
         'session_has_user' => session()->has('auth.password_confirmed_at'),
     ];
 })->middleware('auth');
+
+// Trasa testowa sprawdzająca konfigurację poczty
+Route::get('/mail-config', function () {
+    return [
+        'driver' => config('mail.default'),
+        'host' => config('mail.mailers.smtp.host'),
+        'port' => config('mail.mailers.smtp.port'),
+        'encryption' => config('mail.mailers.smtp.encryption'),
+        'username' => config('mail.mailers.smtp.username') ? 'Is set' : 'Not set',
+        'password' => config('mail.mailers.smtp.password') ? 'Is set' : 'Not set',
+        'from_address' => config('mail.from.address'),
+        'from_name' => config('mail.from.name'),
+    ];
+});
+
+// Prosta trasa testowa do wysyłania maila
+Route::get('/simple-mail-test', function () {
+    try {
+        $email = 'test@example.com'; // Możesz zamienić na swój rzeczywisty adres email testowy
+
+        // Log przed próbą wysłania
+        \Log::info("Attempting to send test email to: " . $email);
+
+        Mail::to($email)->send(new \App\Mail\SimpleTestMail());
+
+        // Log po wysłaniu
+        \Log::info("Email sent successfully");
+
+        return "Simple test mail sent to " . $email . " at " . now();
+    } catch (\Exception $e) {
+        // Log błędu
+        \Log::error("Mail sending error: " . $e->getMessage());
+        \Log::error($e->getTraceAsString());
+
+        return "Error sending mail: " . $e->getMessage();
+    }
+});
 
 require __DIR__.'/auth.php';
