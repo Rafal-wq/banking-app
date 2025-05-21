@@ -155,6 +155,8 @@ class TransactionController extends Controller
                     $transaction->status = 'completed';
                     $transaction->executed_at = now();
                     $transaction->save();
+
+                    // Ładujemy relacje przed wysłaniem maila
                     $transaction->load(['fromAccount', 'toAccount']);
 
                     if ($fromAccount->user && $fromAccount->user->email) {
@@ -163,6 +165,11 @@ class TransactionController extends Controller
                     }
 
                     if ($toAccount->user && $toAccount->user->email) {
+                        // Sprawdzamy czy relacje są już załadowane, jeśli nie, ładujemy je
+                        if (!$transaction->relationLoaded('fromAccount') || !$transaction->relationLoaded('toAccount')) {
+                            $transaction->load(['fromAccount', 'toAccount']);
+                        }
+
                         Mail::to($toAccount->user->email)
                             ->send(new TransactionNotification($transaction, false));
                     }

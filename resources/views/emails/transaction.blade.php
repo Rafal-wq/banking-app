@@ -90,10 +90,42 @@
                 <tr>
                     <th>Kwota</th>
                     <td>
-                        {{ number_format($transaction->amount, 2, ',', ' ') }}
-                        {{ $transaction->fromAccount ? $transaction->fromAccount->currency : 'PLN' }}
+                        @if($isOutgoing)
+                            {{ number_format($transaction->amount, 2, ',', ' ') }}
+                            {{ $transaction->fromAccount ? $transaction->fromAccount->currency : 'PLN' }}
+                        @else
+                            @if($transaction->target_amount)
+                                {{ number_format($transaction->target_amount, 2, ',', ' ') }}
+                                {{ $transaction->toAccount ? $transaction->toAccount->currency : 'PLN' }}
+                            @else
+                                {{ number_format($transaction->amount, 2, ',', ' ') }}
+                                {{ $transaction->toAccount ? $transaction->toAccount->currency : 'PLN' }}
+                            @endif
+                        @endif
                     </td>
                 </tr>
+                {{-- Dodajemy informację o przewalutowaniu, jeśli miało miejsce --}}
+                @if(($isOutgoing && $transaction->target_amount && $transaction->amount != $transaction->target_amount) ||
+                    (!$isOutgoing && $transaction->target_amount && $transaction->amount != $transaction->target_amount))
+                    <tr>
+                        <th>Przewalutowanie</th>
+                        <td>
+                            @if($isOutgoing)
+                                {{ number_format($transaction->amount, 2, ',', ' ') }}
+                                {{ $transaction->fromAccount ? $transaction->fromAccount->currency : 'PLN' }}
+                                &rarr;
+                            {{ number_format($transaction->target_amount, 2, ',', ' ') }}
+                            {{ $transaction->toAccount ? $transaction->toAccount->currency : 'PLN' }}
+                            @else
+                                {{ number_format($transaction->amount, 2, ',', ' ') }}
+                                {{ $transaction->fromAccount ? $transaction->fromAccount->currency : 'PLN' }}
+                                &rarr;
+                            {{ number_format($transaction->target_amount, 2, ',', ' ') }}
+                            {{ $transaction->toAccount ? $transaction->toAccount->currency : 'PLN' }}
+                            @endif
+                        </td>
+                    </tr>
+                @endif
                 <tr>
                     <th>Status</th>
                     <td>

@@ -39,6 +39,15 @@ class TransactionNotification extends Mailable
     {
         $this->transaction = $transaction;
         $this->isOutgoing = $isOutgoing;
+
+        // Upewniamy się, że relacje są załadowane
+        if (!$transaction->relationLoaded('fromAccount')) {
+            $transaction->load('fromAccount');
+        }
+
+        if (!$transaction->relationLoaded('toAccount')) {
+            $transaction->load('toAccount');
+        }
     }
 
     /**
