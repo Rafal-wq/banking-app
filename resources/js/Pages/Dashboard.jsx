@@ -194,13 +194,13 @@ export default function Dashboard() {
                             <p className="text-sm text-gray-600">Otwórz nowe konto bankowe</p>
                         </Link>
 
-                        <Link
-                            href="/transactions"
-                            className="p-4 border rounded text-center hover:bg-gray-50 transition"
-                        >
-                            <div className="font-semibold">Historia transakcji</div>
-                            <p className="text-sm text-gray-600">Przeglądaj swoje transakcje</p>
-                        </Link>
+                        {/*<Link*/}
+                        {/*    href="/transactions"*/}
+                        {/*    className="p-4 border rounded text-center hover:bg-gray-50 transition"*/}
+                        {/*>*/}
+                        {/*    <div className="font-semibold">Historia transakcji</div>*/}
+                        {/*    <p className="text-sm text-gray-600">Przeglądaj swoje transakcje</p>*/}
+                        {/*</Link>*/}
                     </div>
                 </div>
             </div>

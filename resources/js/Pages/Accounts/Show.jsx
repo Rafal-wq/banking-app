@@ -140,7 +140,7 @@ export default function AccountDetails({ id }) {
                                 href="/dashboard"
                                 className="px-4 py-2 bg-gray-600 text-white rounded hover:bg-gray-700 transition"
                             >
-                                Powrót do panelu
+                                Powrót do panelu głównego
                             </Link>
                         </div>
                     </div>
@@ -169,7 +169,7 @@ export default function AccountDetails({ id }) {
                             href="/dashboard"
                             className="px-4 py-2 bg-gray-600 text-white rounded hover:bg-gray-700 transition"
                         >
-                            Powrót do panelu
+                            Powrót do panelu głównego
                         </Link>
                     </div>
                 </div>
@@ -214,18 +214,18 @@ export default function AccountDetails({ id }) {
                         >
                             Przelew zewnętrzny
                         </Link>
-                        <Link
-                            href={`/accounts/${account.id}/deposit`}
-                            className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 transition"
-                        >
-                            Wpłać środki
-                        </Link>
-                        <Link
-                            href={`/accounts/${account.id}/withdraw`}
-                            className="px-4 py-2 bg-yellow-600 text-white rounded hover:bg-yellow-700 transition"
-                        >
-                            Wypłać środki
-                        </Link>
+                        {/*<Link*/}
+                        {/*    href={`/accounts/${account.id}/deposit`}*/}
+                        {/*    className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 transition"*/}
+                        {/*>*/}
+                        {/*    Wpłać środki*/}
+                        {/*</Link>*/}
+                        {/*<Link*/}
+                        {/*    href={`/accounts/${account.id}/withdraw`}*/}
+                        {/*    className="px-4 py-2 bg-yellow-600 text-white rounded hover:bg-yellow-700 transition"*/}
+                        {/*>*/}
+                        {/*    Wypłać środki*/}
+                        {/*</Link>*/}
                     </div>
                 </div>
 
