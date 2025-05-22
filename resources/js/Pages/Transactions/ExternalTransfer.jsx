@@ -18,6 +18,11 @@ export default function ExternalTransfer() {
     const [isSearching, setIsSearching] = useState(false);
     const [foundAccount, setFoundAccount] = useState(null);
 
+    // === NOWY STAN DLA TOAST NOTIFICATIONS ===
+    const [toastMessage, setToastMessage] = useState('');
+    const [toastType, setToastType] = useState('');
+    const [showToast, setShowToast] = useState(false);
+
     const [formData, setFormData] = useState({
         from_account_id: '',
         to_account_number: '',
@@ -25,6 +30,18 @@ export default function ExternalTransfer() {
         title: '',
         description: '',
     });
+
+    // === FUNKCJA DO POKAZYWANIA TOAST ===
+    const showEmailToast = (message, type) => {
+        setToastMessage(message);
+        setToastType(type);
+        setShowToast(true);
+
+        // Ukryj toast po 4 sekundach
+        setTimeout(() => {
+            setShowToast(false);
+        }, 4000);
+    };
 
     useEffect(() => {
         const fetchAccounts = async () => {
@@ -142,7 +159,16 @@ export default function ExternalTransfer() {
 
             if (response.data && response.data.success) {
                 setIsSuccess(true);
-                setStatus('Transakcja została pomyślnie zrealizowana.');
+                setStatus(response.data.message);
+
+                // === NOWA LOGIKA TOAST ===
+                // Sprawdź czy email został wysłany i pokaż toast po 2 sekundach
+                if (response.data.email_sent) {
+                    setTimeout(() => {
+                        showEmailToast('✅ Email z potwierdzeniem transakcji został wysłany', 'success');
+                    }, 2000);
+                }
+
                 setFormData({
                     from_account_id: '',
                     to_account_number: '',
@@ -209,6 +235,23 @@ export default function ExternalTransfer() {
 
     return (
         <div className="min-h-screen bg-gray-100">
+            {/* === TOAST NOTIFICATION === */}
+            {showToast && (
+                <div className={`fixed top-4 right-4 z-50 px-6 py-3 rounded-lg shadow-lg transition-all duration-300 ${
+                    toastType === 'success' ? 'bg-green-500 text-white' : 'bg-red-500 text-white'
+                }`}>
+                    <div className="flex items-center">
+                        <span>{toastMessage}</span>
+                        <button
+                            onClick={() => setShowToast(false)}
+                            className="ml-4 text-white hover:text-gray-200"
+                        >
+                            ✕
+                        </button>
+                    </div>
+                </div>
+            )}
+
             {/* Nagłówek z logo */}
             <div className="bg-white shadow-sm">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">

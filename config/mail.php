@@ -4,6 +4,17 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Email Notifications Enabled
+    |--------------------------------------------------------------------------
+    |
+    | This option controls whether email notifications are enabled globally.
+    | When disabled, no emails will be sent from the application.
+    |
+    */
+    'enabled' => env('MAIL_ENABLED', true),
+
+    /*
+    |--------------------------------------------------------------------------
     | Default Mailer
     |--------------------------------------------------------------------------
     |

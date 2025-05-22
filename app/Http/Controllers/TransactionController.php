@@ -10,6 +10,7 @@ use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\DB;
 use App\Mail\TransactionNotification;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Log;
 
 class TransactionController extends Controller
 {
@@ -156,24 +157,7 @@ class TransactionController extends Controller
                     $transaction->executed_at = now();
                     $transaction->save();
 
-                    // Ładujemy relacje przed wysłaniem maila
-                    $transaction->load(['fromAccount', 'toAccount']);
-
-                    if ($fromAccount->user && $fromAccount->user->email) {
-                        Mail::to($fromAccount->user->email)
-                            ->send(new TransactionNotification($transaction, true));
-                    }
-
-                    if ($toAccount->user && $toAccount->user->email) {
-                        // Sprawdzamy czy relacje są już załadowane, jeśli nie, ładujemy je
-                        if (!$transaction->relationLoaded('fromAccount') || !$transaction->relationLoaded('toAccount')) {
-                            $transaction->load(['fromAccount', 'toAccount']);
-                        }
-
-                        Mail::to($toAccount->user->email)
-                            ->send(new TransactionNotification($transaction, false));
-                    }
-
+                    // COMMIT transakcji finansowej PRZED próbą wysłania emaili
                     DB::commit();
 
                     // Clear the cache for this user's accounts and transactions
@@ -186,12 +170,19 @@ class TransactionController extends Controller
                         Cache::forget('user.'.$toAccount->user_id.'.transactions');
                     }
 
+                    // === NOWA LOGIKA EMAILI ===
+                    // Próbuj wysłać emaile (ale nie blokuj transakcji)
+                    $emailSent = $this->attemptEmailSending($transaction);
+
+                    $baseMessage = 'Transaction completed successfully' .
+                        ($fromAccount->currency !== $toAccount->currency ?
+                            " with currency conversion from {$sourceAmount} {$fromAccount->currency} to {$targetAmount} {$toAccount->currency}" : '');
+
                     return response()->json([
                         'success' => true,
                         'data' => $transaction->load(['fromAccount', 'toAccount']),
-                        'message' => 'Transaction completed successfully' .
-                            ($fromAccount->currency !== $toAccount->currency ?
-                                " with currency conversion from {$sourceAmount} {$fromAccount->currency} to {$targetAmount} {$toAccount->currency}" : ''),
+                        'message' => $baseMessage,
+                        'email_sent' => $emailSent, // Informacja dla frontendu o statusie emaila
                     ], 201);
                 } else {
                     // If deposit fails, rollback the transaction
@@ -215,11 +206,124 @@ class TransactionController extends Controller
             }
         } catch (\Exception $e) {
             DB::rollBack();
+            Log::error('Transaction failed', [
+                'error' => $e->getMessage(),
+                'from_account_id' => $request->from_account_id,
+                'to_account_id' => $request->to_account_id,
+                'amount' => $sourceAmount
+            ]);
+
             return response()->json([
                 'success' => false,
                 'message' => 'An error occurred while processing the transaction: ' . $e->getMessage(),
             ], 500);
         }
+    }
+
+    /**
+     * Próbuj wysłać emaile z 2 próbami
+     */
+    private function attemptEmailSending(Transaction $transaction): bool
+    {
+        // Sprawdź czy emaile są włączone w konfiguracji
+        if (!config('mail.enabled', true)) {
+            Log::info("Email notifications disabled", [
+                'transaction_id' => $transaction->id
+            ]);
+            return false;
+        }
+
+        $maxAttempts = 2;
+
+        for ($attempt = 1; $attempt <= $maxAttempts; $attempt++) {
+            try {
+                // Ładujemy relacje z userami, jeśli nie są załadowane
+                if (!$transaction->relationLoaded('fromAccount')) {
+                    $transaction->load(['fromAccount.user', 'toAccount.user']);
+                }
+
+                $emailsSent = 0;
+                $emailErrors = [];
+
+                // Wyślij email do nadawcy (outgoing transaction)
+                if ($transaction->fromAccount &&
+                    $transaction->fromAccount->user &&
+                    $transaction->fromAccount->user->email) {
+
+                    try {
+                        Mail::to($transaction->fromAccount->user->email)
+                            ->send(new TransactionNotification($transaction, true));
+                        $emailsSent++;
+
+                        Log::info("Outgoing transaction email sent", [
+                            'transaction_id' => $transaction->id,
+                            'recipient' => $transaction->fromAccount->user->email,
+                            'attempt' => $attempt
+                        ]);
+                    } catch (\Throwable $e) {
+                        $emailErrors[] = "Sender email failed: " . $e->getMessage();
+                    }
+                }
+
+                // Wyślij email do odbiorcy (incoming transaction)
+                // ZAWSZE gdy odbiorca ma email (nawet jeśli to ten sam użytkownik)
+                if ($transaction->toAccount &&
+                    $transaction->toAccount->user &&
+                    $transaction->toAccount->user->email) {
+
+                    try {
+                        Mail::to($transaction->toAccount->user->email)
+                            ->send(new TransactionNotification($transaction, false));
+                        $emailsSent++;
+
+                        Log::info("Incoming transaction email sent", [
+                            'transaction_id' => $transaction->id,
+                            'recipient' => $transaction->toAccount->user->email,
+                            'is_same_user' => $transaction->fromAccount->user_id === $transaction->toAccount->user_id,
+                            'attempt' => $attempt
+                        ]);
+                    } catch (\Throwable $e) {
+                        $emailErrors[] = "Recipient email failed: " . $e->getMessage();
+                    }
+                }
+
+                // Sukces - emaile zostały wysłane (przynajmniej jeden)
+                if ($emailsSent > 0) {
+                    Log::info("Transaction notifications sent successfully", [
+                        'transaction_id' => $transaction->id,
+                        'emails_sent' => $emailsSent,
+                        'attempt' => $attempt,
+                        'errors' => $emailErrors
+                    ]);
+
+                    return true;
+                }
+
+                // Jeśli żaden email się nie wysłał, rzuć wyjątek
+                throw new \Exception("No emails were sent. Errors: " . implode('; ', $emailErrors));
+
+            } catch (\Throwable $exception) {
+                Log::warning("Email sending attempt {$attempt} failed", [
+                    'transaction_id' => $transaction->id,
+                    'error' => $exception->getMessage(),
+                    'attempt' => $attempt
+                ]);
+
+                // Jeśli to ostatnia próba, poddaj się
+                if ($attempt === $maxAttempts) {
+                    Log::error("Email sending failed permanently after {$maxAttempts} attempts", [
+                        'transaction_id' => $transaction->id,
+                        'final_error' => $exception->getMessage()
+                    ]);
+                    return false;
+                }
+
+                // Czekaj 1 sekundę przed kolejną próbą
+                sleep(1);
+            }
+        }
+
+        return false;
     }
 
     /**
