@@ -14,6 +14,8 @@ grep "DB_" .env
 echo "Tworzenie katalogów dla przechowywania danych..."
 mkdir -p storage/framework/{sessions,views,cache}
 mkdir -p storage/logs
+# Utworzenie katalogu dla vite
+mkdir -p public/build
 chmod -R 775 storage bootstrap/cache
 
 # Uruchom kontenery Docker
@@ -107,13 +109,16 @@ for i in {1..10}; do
     fi
 done
 
-# Instaluj zależności NPM w dedykowanym kontenerze node
-echo "Instalacja zależności NPM..."
-docker-compose run --rm node install
+# Instaluj i buduj frontend
+echo "Instalacja i budowanie zasobów frontendowych..."
+docker-compose run --rm node sh -c "npm install && npm run build"
 
-# Zbuduj zasoby frontendowe
-echo "Budowanie zasobów frontendowych..."
-docker-compose run --rm node run build
+# Wyczyść cache widoków i innych zasobów
+echo "Optymalizacja aplikacji..."
+docker-compose exec app php artisan view:clear
+docker-compose exec app php artisan route:clear
+docker-compose exec app php artisan config:clear
+docker-compose exec app php artisan cache:clear
 
 echo "====================================================="
 echo "Aplikacja bankowa została skonfigurowana w Dockerze!"
