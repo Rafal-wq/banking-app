@@ -1,0 +1,542 @@
+\section{Krok 3: Wdrożone zagadnienia kwalifikacyjne}
+
+W projekcie aplikacji bankowej zostało zaimplementowanych 18 kluczowych zagadnień technologicznych zgodnie z wymaganiami kwalifikacyjnymi. Poniżej przedstawiono szczegółowy opis każdego z zagadnień wraz z konkretными przykładami implementacji.
+
+\subsection{1. Framework MVC}
+
+Aplikacja została zbudowana w oparciu o framework Laravel 12, który implementuje wzorzec architektoniczny Model-View-Controller (MVC).
+
+\textbf{Model:} Reprezentuje logikę biznesową i zarządzanie danymi:
+\begin{itemize}
+    \item \texttt{User.php} - model użytkownika z relacjami do kont bankowych
+    \item \texttt{BankAccount.php} - model konta bankowego z metodami deposit/withdraw
+    \item \texttt{Transaction.php} - model transakcji z logiką wykonywania przelewów
+\end{itemize}
+
+\textbf{View:} Interfejs użytkownika zrealizowany przez komponenty React z Inertia.js:
+\begin{itemize}
+    \item \texttt{Dashboard.jsx} - główny panel użytkownika
+    \item \texttt{Accounts/Create.jsx} - formularz tworzenia konta
+    \item \texttt{Transactions/Create.jsx} - formularz wykonywania przelewów
+\end{itemize}
+
+\textbf{Controller:} Kontrolery zarządzające logiką aplikacji:
+\begin{itemize}
+    \item \texttt{BankAccountController.php} - obsługa operacji na kontach
+    \item \texttt{TransactionController.php} - zarządzanie transakcjami
+    \item \texttt{AuthenticatedSessionController.php} - uwierzytelnianie
+\end{itemize}
+
+\subsection{2. Framework CSS}
+
+Do stylizacji aplikacji wykorzystano framework \textbf{Tailwind CSS} w wersji 3.2.1, który oferuje podejście utility-first.
+
+\textbf{Cechy wykorzystania:}
+\begin{itemize}
+    \item Responsive design z predefiniowanymi breakpointami
+    \item Utility classes dla szybkiego prototypowania
+    \item Customizacja poprzez \texttt{tailwind.config.js}
+    \item Integracja z systemem budowania Vite
+\end{itemize}
+
+\textbf{Przykład implementacji:}
+\begin{verbatim}
+<div className="bg-white rounded-lg shadow-md p-6
+                hover:shadow-lg transition-shadow">
+    <h2 className="text-xl font-bold text-gray-800 mb-4">
+        Twoje konta
+    </h2>
+</div>
+\end{verbatim}
+
+\subsection{3. Baza danych}
+
+System wykorzystuje bazę danych \textbf{MySQL 8.0} z pełną obsługą transakcji ACID i relacji.
+
+\textbf{Struktura bazy danych:}
+\begin{itemize}
+    \item \texttt{users} - dane użytkowników
+    \item \texttt{bank\_accounts} - konta bankowe z saldami
+    \item \texttt{transactions} - historia transakcji
+    \item \texttt{personal\_access\_tokens} - tokeny uwierzytelniania
+\end{itemize}
+
+\textbf{Relacje:}
+\begin{itemize}
+    \item User $\rightarrow$ BankAccount (1:N)
+    \item BankAccount $\rightarrow$ Transaction (1:N jako źródło i cel)
+\end{itemize}
+
+\textbf{Migracje Laravel:} System wykorzystuje migracje do zarządzania schematem bazy danych, zapewniając wersjonowanie struktury.
+
+\subsection{4. Cache}
+
+Implementacja mechanizmów cache'owania dla optymalizacji wydajności aplikacji.
+
+\textbf{Cache bazy danych:} Wykorzystanie cache'u w tabeli \texttt{cache} MySQL:
+\begin{verbatim}
+$accounts = Cache::remember('user.'.$userId.'.accounts', 300,
+    function () use ($user) {
+        return $user->bankAccounts()->with(['transactions'])->get();
+    });
+\end{verbatim}
+
+\textbf{Strategia cache'owania:}
+\begin{itemize}
+    \item Cache kont użytkownika (5 minut)
+    \item Cache transakcji finansowych
+    \item Cache kursów walut (15 minut)
+    \item Cache danych giełdowych (15 minut)
+\end{itemize}
+
+\subsection{5. Dependency Manager}
+
+Projekt wykorzystuje dwa główne managery zależności:
+
+\textbf{Composer (PHP):} Zarządzanie pakietami PHP:
+\begin{itemize}
+    \item Laravel Framework 12.0
+    \item Laravel Sanctum 4.0 (uwierzytelnianie)
+    \item Inertia.js Laravel 2.0
+    \item Tightenco Ziggy 2.0 (routing)
+\end{itemize}
+
+\textbf{NPM (JavaScript):} Zarządzanie pakietami JavaScript:
+\begin{itemize}
+    \item React 18.2.0
+    \item Vite 6.2.0 (build tool)
+    \item Tailwind CSS 3.2.1
+    \item Axios 1.8.1 (HTTP client)
+\end{itemize}
+
+\subsection{6. HTML}
+
+Semantyczny HTML generowany przez komponenty React z odpowiednimi znacznikami.
+
+\textbf{Cechy implementacji:}
+\begin{itemize}
+    \item Semantyczne znaczniki (\texttt{<main>}, \texttt{<nav>}, \texttt{<section>})
+    \item Accessibility przez ARIA labels
+    \item Meta tagi dla SEO i viewport
+    \item Formulary z odpowiednimi typami input
+\end{itemize}
+
+\textbf{Główny szablon:} \texttt{app.blade.php} z integracją Inertia.js:
+\begin{verbatim}
+<!DOCTYPE html>
+<html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
+    @viteReactRefresh
+    @vite(['resources/js/app.jsx'])
+</head>
+<body>@inertia</body>
+</html>
+\end{verbatim}
+
+\subsection{7. CSS}
+
+Stylizacja realizowana poprzez Tailwind CSS z dodatkowymi customowymi komponentami.
+
+\textbf{Organizacja stylów:}
+\begin{itemize}
+    \item \texttt{app.css} - główny plik stylów z dyrektywami Tailwind
+    \item Komponenty React ze stylizacją inline przez className
+    \item Responsive design dla wszystkich rozdzielczości
+    \item Dark mode support (dostępny w Tailwind)
+\end{itemize}
+
+\textbf{Przykład wykorzystania:}
+\begin{verbatim}
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+\end{verbatim}
+
+\subsection{8. JavaScript}
+
+Nowoczesny JavaScript ES6+ w architekturze komponentowej React.
+
+\textbf{Główne funkcjonalności:}
+\begin{itemize}
+    \item Komponenty funkcyjne z React Hooks
+    \item Asynchroniczne operacje z async/await
+    \item Zarządzanie stanem przez useState/useEffect
+    \item Event handling dla formularzy i interakcji
+    \item Axios dla komunikacji HTTP
+\end{itemize}
+
+\textbf{Przykład komponentu:}
+\begin{verbatim}
+const [accounts, setAccounts] = useState([]);
+const [loading, setLoading] = useState(true);
+
+useEffect(() => {
+    const fetchAccounts = async () => {
+        const response = await axios.get('/api/bank-accounts');
+        setAccounts(response.data.data);
+        setLoading(false);
+    };
+    fetchAccounts();
+}, []);
+\end{verbatim}
+
+\subsection{9. Routing}
+
+System routingu oparty na Laravel z integracją Inertia.js.
+
+\textbf{Routing backendowy (Laravel):}
+\begin{itemize}
+    \item \texttt{web.php} - trasy dla widoków Inertia
+    \item \texttt{api.php} - RESTful API endpoints
+    \item \texttt{auth.php} - trasy uwierzytelniania
+    \item Middleware dla autoryzacji i CSRF
+\end{itemize}
+
+\textbf{Przykłady tras:}
+\begin{verbatim}
+// RESTful API routes
+Route::apiResource('bank-accounts', BankAccountController::class);
+Route::apiResource('transactions', TransactionController::class);
+
+// Inertia routes
+Route::get('/dashboard', function () {
+    return Inertia::render('Dashboard');
+})->middleware(['auth']);
+\end{verbatim}
+
+\textbf{Ziggy integration:} Udostępnianie tras Laravel w JavaScript przez pakiet Ziggy.
+
+\subsection{10. ORM}
+
+Wykorzystanie Eloquent ORM dla łatwego zarządzania danymi i relacjami.
+
+\textbf{Modele z relacjami:}
+\begin{verbatim}
+// User model
+public function bankAccounts(): HasMany
+{
+    return $this->hasMany(BankAccount::class);
+}
+
+// BankAccount model
+public function outgoingTransactions(): HasMany
+{
+    return $this->hasMany(Transaction::class, 'from_account_id');
+}
+
+public function incomingTransactions(): HasMany
+{
+    return $this->hasMany(Transaction::class, 'to_account_id');
+}
+\end{verbatim}
+
+\textbf{Query Builder:} Zaawansowane zapytania z eager loading:
+\begin{verbatim}
+$transactions = Transaction::where(function ($query) use ($accountIds) {
+    $query->whereIn('from_account_id', $accountIds)
+          ->orWhereIn('to_account_id', $accountIds);
+})->with(['fromAccount', 'toAccount'])->get();
+\end{verbatim}
+
+\subsection{11. Uwierzytelnianie}
+
+Bezpieczny system uwierzytelniania oparty na Laravel Sanctum.
+
+\textbf{Mechanizmy uwierzytelniania:}
+\begin{itemize}
+    \item Session-based authentication dla SPA
+    \item API Token authentication
+    \item CSRF protection
+    \item Rate limiting (5 prób na minutę)
+    \item Password hashing z bcrypt
+\end{itemize}
+
+\textbf{Implementacja:}
+\begin{verbatim}
+// Login controller
+public function store(LoginRequest $request)
+{
+    $request->authenticate();
+    $request->session()->regenerate();
+
+    $token = Auth::user()->createToken('api-token')->plainTextToken;
+
+    return response()->json([
+        'success' => true,
+        'token' => $token,
+        'user' => Auth::user()
+    ]);
+}
+\end{verbatim}
+
+\subsection{12. Mailing}
+
+Zintegrowany system powiadomień email z wieloma próbami wysyłki.
+
+\textbf{Klasy mailowe:}
+\begin{itemize}
+    \item \texttt{TransactionNotification} - powiadomienia o transakcjach
+    \item \texttt{SimpleTestMail} - email testowy
+    \item Szablony Blade dla formatowania HTML
+\end{itemize}
+
+\textbf{Funkcjonalności:}
+\begin{verbatim}
+// Wysyłka z retry mechanism
+private function attemptEmailSending(Transaction $transaction): bool
+{
+    $maxAttempts = 2;
+
+    for ($attempt = 1; $attempt <= $maxAttempts; $attempt++) {
+        try {
+            Mail::to($transaction->fromAccount->user->email)
+                ->send(new TransactionNotification($transaction, true));
+            return true;
+        } catch (\Throwable $e) {
+            Log::warning("Email attempt {$attempt} failed");
+            sleep(1);
+        }
+    }
+    return false;
+}
+\end{verbatim}
+
+\subsection{13. Formularze}
+
+Kompleksowe formularze z walidacją po stronie klienta i serwera.
+
+\textbf{Rodzaje formularzy:}
+\begin{itemize}
+    \item Rejestracja i logowanie użytkowników
+    \item Tworzenie kont bankowych
+    \item Wykonywanie przelewów wewnętrznych i zewnętrznych
+    \item Edycja profilu użytkownika
+    \item Wymiana walut
+\end{itemize}
+
+\textbf{Walidacja:}
+\begin{verbatim}
+// Laravel validation
+$request->validate([
+    'name' => 'required|string|max:255',
+    'currency' => ['required', 'string', Rule::in(['PLN', 'EUR', 'USD', 'GBP'])],
+    'amount' => 'required|numeric|min:0.01',
+]);
+
+// React form handling
+const { data, setData, post, processing, errors } = useForm({
+    from_account_id: '',
+    to_account_id: '',
+    amount: '',
+    title: '',
+});
+\end{verbatim}
+
+\subsection{14. Asynchroniczne interakcje}
+
+Implementacja asynchronicznych operacji dla płynnego UX.
+
+\textbf{Frontend (React):}
+\begin{itemize}
+    \item useEffect dla asynchronicznego ładowania danych
+    \item Loading states podczas oczekiwania na odpowiedź
+    \item Error handling z toast notifications
+    \item Optimistic updates dla lepszego UX
+\end{itemize}
+
+\textbf{Backend (Laravel):}
+\begin{itemize}
+    \item Asynchroniczne wysyłanie emaili
+    \item Background processing dla transakcji
+    \item Queue system dla długotrwałych operacji
+\end{itemize}
+
+\textbf{Przykład implementacji:}
+\begin{verbatim}
+const [loading, setLoading] = useState(false);
+
+const handleSubmit = async (e) => {
+    setLoading(true);
+    try {
+        const response = await axios.post('/api/transactions', data);
+        showSuccessMessage(response.data.message);
+    } catch (error) {
+        showErrorMessage(error.response.data.message);
+    } finally {
+        setLoading(false);
+    }
+};
+\end{verbatim}
+
+\subsection{15. Konsumpcja API}
+
+Integracja z zewnętrznymi API oraz własne API RESTful.
+
+\textbf{Zewnętrzne API:}
+\begin{itemize}
+    \item \textbf{Alpha Vantage API} - dane giełdowe (S\&P 500, FTSE 100, Nikkei 225)
+    \item \textbf{ExchangeRate-API} - aktualne kursy walut
+    \item Fallback na statyczne dane przy braku połączenia
+    \item Cache'owanie odpowiedzi (15 minut)
+\end{itemize}
+
+\textbf{Własne API:}
+\begin{verbatim}
+// FinancialDataService.php
+public function getStockIndices()
+{
+    return Cache::remember('stock_indices', 900, function () {
+        $spData = $this->fetchAlphaVantageGlobalQuote('SPY');
+        $ftseData = $this->fetchAlphaVantageGlobalQuote('FTSE.LON');
+        return ['nyse' => $spData, 'london' => $ftseData];
+    });
+}
+
+// Frontend consumption
+const response = await axios.get('/api/exchange-rates');
+setExchangeRates(response.data.data);
+\end{verbatim}
+
+\subsection{16. RWD (Responsywny frontend)}
+
+Pełna responsywność na wszystkich urządzeniach poprzez Tailwind CSS i React.
+
+\textbf{Implementacja RWD:}
+\begin{itemize}
+    \item Mobile-first approach
+    \item Flexbox i CSS Grid layouts
+    \item Responsive breakpoints (sm, md, lg, xl)
+    \item Touch-friendly UI elements
+    \item Adaptive navigation menus
+\end{itemize}
+
+\textbf{Przykłady responsive design:}
+\begin{verbatim}
+<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+    <div className="p-4 bg-white rounded-lg shadow
+                    hover:shadow-md transition-shadow">
+        <h3 className="text-lg font-semibold mb-2">
+            {account.name}
+        </h3>
+    </div>
+</div>
+
+// Navigation
+<div className="hidden sm:ms-6 sm:flex sm:items-center">
+    <Dropdown>...</Dropdown>
+</div>
+<div className="-me-2 flex items-center sm:hidden">
+    <button>Menu</button>
+</div>
+\end{verbatim}
+
+\subsection{17. Logger}
+
+Kompleksowy system logowania akcji i zdarzeń w aplikacji.
+
+\textbf{Rodzaje logów:}
+\begin{itemize}
+    \item Logi transakcji finansowych
+    \item Logi błędów aplikacji
+    \item Logi uwierzytelniania
+    \item Logi wysyłki emaili
+    \item Logi API calls
+\end{itemize}
+
+\textbf{Implementacja:}
+\begin{verbatim}
+// Transaction logging
+Log::info('Transaction created', [
+    'transaction_id' => $transaction->id,
+    'user_id' => $user->id,
+    'amount' => $transaction->amount,
+    'from_account' => $transaction->from_account_id,
+    'to_account' => $transaction->to_account_id
+]);
+
+// Error logging
+Log::error('Transaction failed', [
+    'error' => $e->getMessage(),
+    'user_id' => $user->id,
+    'trace' => $e->getTraceAsString()
+]);
+
+// Email logging
+Log::info("Transaction email sent", [
+    'transaction_id' => $transaction->id,
+    'recipient' => $user->email,
+    'type' => $isOutgoing ? 'outgoing' : 'incoming'
+]);
+\end{verbatim}
+
+\subsection{18. Deployment}
+
+Aplikacja przygotowana do deployment na różnych środowiskach.
+
+\textbf{Digital Ocean VPS Deployment:}
+\begin{itemize}
+    \item Konfiguracja nginx + PHP-FPM
+    \item MySQL na tym samym serwerze
+    \item Environment variables przez .env
+    \item Process management przez systemd
+\end{itemize}
+
+\textbf{Docker dla Development:}
+\begin{itemize}
+    \item \texttt{docker-compose.yml} z wieloma serwisami
+    \item Konteneryzacja: app, nginx, mysql, node, phpmyadmin
+    \item Volume mounting dla development
+    \item Hot reload z Vite
+\end{itemize}
+
+\textbf{Scripts automatyzujące:}
+\begin{itemize}
+    \item \texttt{init.sh} / \texttt{init.ps1} - inicjalizacja środowiska
+    \item \texttt{start.sh} / \texttt{start.cmd} - automatyczne wykrywanie OS
+    \item \texttt{.do/deploy.sh} - skrypt post-deploy
+\end{itemize}
+
+\textbf{Environment Configuration:}
+\begin{verbatim}
+// .env.docker dla development
+APP_ENV=local
+APP_DEBUG=true
+DB_HOST=mysql
+DB_PORT=3306
+
+// .do/app.yaml dla Digital Ocean
+name: banking-app
+services:
+- name: web
+  build_command: |
+    npm install && npm run build
+    composer install --optimize-autoloader --no-dev
+  run_command: heroku-php-apache2 public/
+\end{verbatim}
+
+\textbf{CI/CD Ready:}
+\begin{itemize}
+    \item Struktura przygotowana pod GitHub Actions
+    \item Automated testing poprzez PHPUnit
+    \item Build optimization dla produkcji
+    \item Database migrations w deployment pipeline
+\end{itemize}
+
+\section{Podsumowanie zagadnień kwalifikacyjnych}
+
+Wszystkie 18 wymaganych zagadnień zostało pomyślnie zaimplementowanych w aplikacji bankowej, demonstrując:
+
+\begin{itemize}
+    \item \textbf{Architekturę MVC} poprzez Laravel + React + Inertia.js
+    \item \textbf{Nowoczesne technologie frontend} (React, Tailwind CSS, Vite)
+    \item \textbf{Solidne fundamenty backend} (Laravel, MySQL, Eloquent ORM)
+    \item \textbf{Bezpieczeństwo} (Sanctum, CSRF, validation, logging)
+    \item \textbf{Integracje zewnętrzne} (API finansowe, mailing)
+    \item \textbf{Optymalizację} (cache, asynchroniczne operacje)
+    \item \textbf{Deployment ready} (Docker, Digital Ocean, scripts)
+\end{itemize}
+
+Każde zagadnienie zostało zrealizowane zgodnie z najlepszymi praktykami branżowymi i zapewnia wysoką jakość, bezpieczeństwo oraz skalowalność rozwiązania.

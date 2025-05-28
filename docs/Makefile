@@ -48,6 +48,9 @@ functional-description: $(OUTPUT_DIR)/functional-description.pdf
 .PHONY: technical-architecture
 technical-architecture: $(OUTPUT_DIR)/technical-architecture.pdf
 
+.PHONY: implementation-analysis
+implementation-analysis: $(OUTPUT_DIR)/implementation-analysis.pdf
+
 .PHONY: api-docs
 api-docs: $(OUTPUT_DIR)/api-documentation.pdf
 
@@ -81,14 +84,16 @@ cleanall: clean
 .PHONY: help
 help:
 	@echo "Dostępne komendy:"
-	@echo "  make all                    - Kompiluj wszystkie dokumenty"
-	@echo "  make functional-description - Kompiluj opis funkcjonalny"
-	@echo "  make api-docs              - Kompiluj dokumentację API"
-	@echo "  make database-schema       - Kompiluj schemat bazy danych"
-	@echo "  make user-manual           - Kompiluj instrukcję użytkownika"
-	@echo "  make clean                 - Usuń pliki tymczasowe"
-	@echo "  make cleanall              - Usuń wszystkie wygenerowane pliki"
-	@echo "  make help                  - Pokaż tę pomoc"
+	@echo "  make all                     - Kompiluj wszystkie dokumenty"
+	@echo "  make functional-description  - Kompiluj opis funkcjonalny"
+	@echo "  make technical-architecture  - Kompiluj opis technologiczny"
+	@echo "  make implementation-analysis - Kompiluj analizę implementacji"
+	@echo "  make api-docs               - Kompiluj dokumentację API"
+	@echo "  make database-schema        - Kompiluj schemat bazy danych"
+	@echo "  make user-manual            - Kompiluj instrukcję użytkownika"
+	@echo "  make clean                  - Usuń pliki tymczasowe"
+	@echo "  make cleanall               - Usuń wszystkie wygenerowane pliki"
+	@echo "  make help                   - Pokaż tę pomoc"
 
 # Sprawdzenie zależności
 .PHONY: check-deps
@@ -97,4 +102,3 @@ check-deps:
 	@command -v pdflatex >/dev/null 2>&1 || { echo "❌ pdflatex nie jest zainstalowany"; exit 1; }
 	@echo "✓ pdflatex jest dostępny"
 	@echo "✓ Wszystkie zależności są spełnione"
-

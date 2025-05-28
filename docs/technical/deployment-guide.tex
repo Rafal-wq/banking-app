@@ -1,0 +1,687 @@
+\documentclass[12pt,a4paper]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[polish]{babel}
+\usepackage[T1]{fontenc}
+\usepackage{geometry}
+\usepackage{graphicx}
+\usepackage{amsmath}
+\usepackage{amsfonts}
+\usepackage{amssymb}
+\usepackage{enumitem}
+\usepackage{booktabs}
+\usepackage{longtable}
+\usepackage{array}
+\usepackage{xcolor}
+\usepackage{hyperref}
+\usepackage{listings}
+\usepackage{fancyhdr}
+
+\geometry{margin=2.5cm}
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{Aplikacja Bankowa - Przewodnik wdrożenia}
+\fancyhead[R]{\thepage}
+
+\title{\textbf{Aplikacja Bankowa}\\[0.5cm]\Large Przewodnik wdrożenia i uruchomienia systemu}
+\author{Dokumentacja techniczna}
+\date{\today}
+
+% Konfiguracja listingów kodu
+\lstset{
+    basicstyle=\ttfamily\footnotesize,
+    backgroundcolor=\color{gray!10},
+    frame=single,
+    breaklines=true,
+    showstringspaces=false,
+    numbers=left,
+    numberstyle=\tiny\color{gray},
+    captionpos=b
+}
+
+\begin{document}
+
+    \maketitle
+    \thispagestyle{empty}
+
+    \newpage
+    \tableofcontents
+    \newpage
+
+    \section{Wprowadzenie}
+
+    Niniejszy dokument zawiera kompletną instrukcję wdrożenia i uruchomienia aplikacji bankowej w różnych środowiskach. System może być uruchamiany lokalnie w środowisku deweloperskim oraz zdalnie na serwerze produkcyjnym.
+
+    \subsection{Wymagania systemowe}
+
+    \textbf{Minimalne wymagania:}
+    \begin{itemize}
+        \item PHP 8.2 lub nowszy
+        \item Node.js 18.0 lub nowszy
+        \item MySQL 8.0 lub nowszy
+        \item Composer 2.0 lub nowszy
+        \item NPM 8.0 lub nowszy
+        \item Git (do klonowania repozytorium)
+    \end{itemize}
+
+    \textbf{Wymagania dodatkowe dla środowiska deweloperskiego:}
+    \begin{itemize}
+        \item Docker i Docker Compose (opcjonalnie)
+        \item Dostęp do portów: 8000 (Laravel), 5173 (Vite), 3306 (MySQL)
+        \item Minimum 4GB RAM
+        \item 2GB wolnego miejsca na dysku
+    \end{itemize}
+
+    \section{Uruchomienie lokalne}
+
+    \subsection{Przygotowanie środowiska}
+
+    \subsubsection{Klonowanie repozytorium}
+
+    \begin{lstlisting}[language=bash, caption=Klonowanie projektu]
+# Klonuj repozytorium
+git clone [URL_REPOZYTORIUM]
+cd banking-app
+
+# Sprawdź strukturę projektu
+ls -la
+    \end{lstlisting}
+
+    \subsubsection{Instalacja zależności}
+
+    \textbf{Zależności PHP (Backend):}
+    \begin{lstlisting}[language=bash, caption=Instalacja zależności PHP]
+# Instalacja pakietów Composer
+composer install
+
+# Weryfikacja instalacji
+composer --version
+php --version
+    \end{lstlisting}
+
+    \textbf{Zależności JavaScript (Frontend):}
+    \begin{lstlisting}[language=bash, caption=Instalacja zależności JavaScript]
+# Instalacja pakietów NPM
+npm install
+
+# Weryfikacja instalacji
+npm --version
+node --version
+    \end{lstlisting}
+
+    \subsection{Konfiguracja środowiska}
+
+    \subsubsection{Plik konfiguracyjny .env}
+
+    \begin{lstlisting}[language=bash, caption=Przygotowanie pliku .env]
+# Skopiuj przykładowy plik konfiguracyjny
+cp .env.example .env
+
+# Wygeneruj klucz aplikacji
+php artisan key:generate
+    \end{lstlisting}
+
+    \textbf{Konfiguracja bazy danych w .env:}
+    \begin{lstlisting}[caption=Przykładowa konfiguracja bazy danych]
+APP_NAME=BankApp
+APP_ENV=local
+APP_KEY=base64:generated_key_here
+APP_DEBUG=true
+APP_URL=http://localhost:8000
+
+DB_CONNECTION=mysql
+DB_HOST=127.0.0.1
+DB_PORT=3306
+DB_DATABASE=banking_app
+DB_USERNAME=root
+DB_PASSWORD=your_password
+
+BROADCAST_DRIVER=log
+CACHE_DRIVER=database
+FILESYSTEM_DISK=local
+QUEUE_CONNECTION=database
+SESSION_DRIVER=database
+SESSION_LIFETIME=120
+
+MAIL_MAILER=log
+MAIL_ENABLED=true
+MAIL_FROM_ADDRESS="noreply@bankapp.local"
+MAIL_FROM_NAME="${APP_NAME}"
+    \end{lstlisting}
+
+    \subsubsection{Przygotowanie bazy danych}
+
+    \textbf{Tworzenie bazy danych MySQL:}
+    \begin{lstlisting}[language=sql, caption=SQL dla tworzenia bazy danych]
+-- Zaloguj się do MySQL
+mysql -u root -p
+
+-- Utwórz bazę danych
+CREATE DATABASE banking_app CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+-- Utwórz użytkownika (opcjonalnie)
+CREATE USER 'bankapp_user'@'localhost' IDENTIFIED BY 'secure_password';
+GRANT ALL PRIVILEGES ON banking_app.* TO 'bankapp_user'@'localhost';
+FLUSH PRIVILEGES;
+
+-- Wyjdź z MySQL
+EXIT;
+    \end{lstlisting}
+
+    \textbf{Uruchomienie migracji:}
+    \begin{lstlisting}[language=bash, caption=Migracje bazy danych]
+# Wykonaj migracje
+php artisan migrate
+
+# Załaduj dane testowe (opcjonalnie)
+php artisan db:seed
+
+# Sprawdź status migracji
+php artisan migrate:status
+    \end{lstlisting}
+
+    \subsection{Uruchomienie aplikacji}
+
+    \subsubsection{Metoda standardowa (zalecana)}
+
+    \textbf{Terminal 1 - Serwer Laravel:}
+    \begin{lstlisting}[language=bash, caption=Uruchomienie serwera Laravel]
+# Uruchom serwer deweloperski Laravel
+php artisan serve
+
+# Serwer będzie dostępny pod adresem:
+# http://localhost:8000
+    \end{lstlisting}
+
+    \textbf{Terminal 2 - Serwer Vite (Frontend):}
+    \begin{lstlisting}[language=bash, caption=Uruchomienie serwera Vite]
+# W nowym terminalu uruchom Vite dev server
+npm run dev
+
+# Vite będzie dostępny pod adresem:
+# http://localhost:5173
+# Hot Module Replacement będzie aktywne
+    \end{lstlisting}
+
+    \subsubsection{Weryfikacja działania}
+
+    \begin{itemize}
+        \item Otwórz przeglądarkę i przejdź do \texttt{http://localhost:8000}
+        \item Sprawdź, czy strona główna się ładuje
+        \item Przetestuj rejestrację nowego użytkownika
+        \item Sprawdź, czy hot reload działa podczas edycji plików React
+    \end{itemize}
+
+    \textbf{Testowanie podstawowych funkcjonalności:}
+    \begin{lstlisting}[language=bash, caption=Testy połączenia z bazą danych]
+# Test połączenia z bazą danych
+php artisan tinker
+>>> \DB::connection()->getPdo();
+>>> exit
+
+# Test endpointów API
+curl http://localhost:8000/api/auth-check
+    \end{lstlisting}
+
+    \subsection{Alternatywne metody uruchomienia}
+
+    \subsubsection{Docker (dla deweloperów preferujących konteneryzację)}
+
+    \textbf{Automatyczne uruchomienie:}
+    \begin{lstlisting}[language=bash, caption=Uruchomienie z Docker]
+# Linux/macOS
+./start.sh
+
+# Windows
+start.cmd
+
+# Lub bezpośrednio przez init script
+./init.sh  # Linux/macOS
+init.ps1   # Windows PowerShell
+    \end{lstlisting}
+
+    \textbf{Ręczne uruchomienie Docker:}
+    \begin{lstlisting}[language=bash, caption=Docker Compose]
+# Uruchom wszystkie kontenery
+docker-compose up -d
+
+# Sprawdź status kontenerów
+docker-compose ps
+
+# Zainstaluj zależności w kontenerze
+docker-compose exec app composer install
+docker-compose exec app php artisan key:generate
+docker-compose exec app php artisan migrate
+
+# Zbuduj frontend
+docker-compose run node npm install
+docker-compose run node npm run build
+    \end{lstlisting}
+
+    \textbf{Porty używane przez Docker:}
+    \begin{itemize}
+        \item \texttt{8000} - Aplikacja główna (nginx + Laravel)
+        \item \texttt{8080} - phpMyAdmin
+        \item \texttt{5173} - Vite dev server (tylko w trybie dev)
+        \item \texttt{3306} - MySQL (wewnętrzny)
+    \end{itemize}
+
+    \section{Uruchomienie zdalne}
+
+    \subsection{Dostęp do aplikacji produkcyjnej}
+
+    Aplikacja bankowa jest wdrożona i dostępna pod następującym adresem:
+
+    \begin{center}
+        \textbf{\Large \url{http://209.38.233.137/}}
+    \end{center}
+
+    \subsubsection{Informacje o środowisku produkcyjnym}
+
+    \textbf{Specyfikacja serwera:}
+    \begin{itemize}
+        \item \textbf{Adres IP:} 209.38.233.137
+        \item \textbf{Platforma:} Digital Ocean Droplet
+        \item \textbf{System operacyjny:} Ubuntu 22.04 LTS
+        \item \textbf{Serwer HTTP:} nginx 1.24
+        \item \textbf{PHP:} 8.2-fpm
+        \item \textbf{Baza danych:} MySQL 8.0
+        \item \textbf{SSL:} HTTP (bez szyfrowania - środowisko deweloperskie)
+    \end{itemize}
+
+    \textbf{Architektura produkcyjna:}
+    \begin{itemize}
+        \item \textbf{Web Server:} nginx jako reverse proxy
+        \item \textbf{Application Server:} PHP-FPM
+        \item \textbf{Database:} MySQL na tym samym serwerze
+        \item \textbf{Frontend:} Zbudowane zasoby statyczne (Vite build)
+        \item \textbf{Session Storage:} Database-driven sessions
+        \item \textbf{Cache:} Database cache (tabela cache)
+    \end{itemize}
+
+    \subsubsection{Konta testowe}
+
+    Dla celów demonstracyjnych dostępne są następujące konta testowe:
+
+    \textbf{Konto testowe \#1:}
+    \begin{itemize}
+        \item \textbf{Email:} test@example.com
+        \item \textbf{Hasło:} password
+        \item \textbf{Opis:} Konto z przykładowymi transakcjami i kontami bankowymi
+    \end{itemize}
+
+    \textbf{Możliwość rejestracji:}
+    \begin{itemize}
+        \item Można utworzyć własne konto przez formularz rejestracji
+        \item Bonus powitalny 1000 PLN dla pierwszego konta
+        \item Pełna funkcjonalność systemu bankowego
+    \end{itemize}
+
+    \subsection{Funkcjonalności dostępne zdalnie}
+
+    \subsubsection{Pełny zakres funkcji}
+
+    \begin{itemize}
+        \item \textbf{Uwierzytelnianie:} Rejestracja i logowanie użytkowników
+        \item \textbf{Zarządzanie kontami:} Tworzenie kont w różnych walutach
+        \item \textbf{Przelewy wewnętrzne:} Transfery między własnymi kontami
+        \item \textbf{Przelewy zewnętrzne:} Transfery do innych użytkowników
+        \item \textbf{Wymiana walut:} Automatyczne przewalutowanie
+        \item \textbf{Historia transakcji:} Pełna historia z filtrowaniem
+        \item \textbf{Powiadomienia email:} Automatyczne powiadomienia o transakcjach
+        \item \textbf{Responsywny interfejs:} Działa na wszystkich urządzeniach
+    \end{itemize}
+
+    \subsubsection{Dane finansowe w czasie rzeczywistym}
+
+    \begin{itemize}
+        \item \textbf{Kursy walut:} Aktualne kursy USD, EUR, GBP względem PLN
+        \item \textbf{Indeksy giełdowe:} S\&P 500, FTSE 100, Nikkei 225
+        \item \textbf{Aktualizacja:} Co 15 minut z zewnętrznych API
+        \item \textbf{Fallback:} Statyczne dane przy braku połączenia z API
+    \end{itemize}
+
+    \subsection{Monitorowanie i diagnostyka}
+
+    \subsubsection{Endpointy diagnostyczne}
+
+    \textbf{Dostępne endpointy testowe:}
+    \begin{lstlisting}[language=bash, caption=Testowanie endpointów zdalnych]
+# Test połączenia z bazą danych
+curl http://209.38.233.137/db-test
+
+# Sprawdzenie konfiguracji
+curl http://209.38.233.137/db-info
+
+# Test sesji użytkownika
+curl http://209.38.233.137/session-test
+
+# Test konfiguracji poczty
+curl http://209.38.233.137/mail-config
+    \end{lstlisting}
+
+    \textbf{Logi systemu:}
+    \begin{itemize}
+        \item Logi błędów aplikacji
+        \item Logi transakcji finansowych
+        \item Logi uwierzytelniania
+        \item Logi wysyłki emaili
+    \end{itemize}
+
+    \section{Proces wdrażania (Deployment)}
+
+    \subsection{Przygotowanie do wdrożenia}
+
+    \subsubsection{Build zasobów produkcyjnych}
+
+    \begin{lstlisting}[language=bash, caption=Budowanie zasobów dla produkcji]
+# Zbuduj zasoby frontend dla produkcji
+npm run build
+
+# Zoptymalizuj autoloader Composera
+composer install --optimize-autoloader --no-dev
+
+# Zoptymalizuj Laravel
+php artisan config:cache
+php artisan route:cache
+php artisan view:cache
+php artisan optimize
+    \end{lstlisting}
+
+    \subsubsection{Konfiguracja środowiska produkcyjnego}
+
+    \textbf{Plik .env dla produkcji:}
+    \begin{lstlisting}[caption=Przykładowa konfiguracja produkcyjna]
+APP_NAME=BankApp
+APP_ENV=production
+APP_KEY=base64:production_key_here
+APP_DEBUG=false
+APP_URL=http://209.38.233.137
+
+DB_CONNECTION=mysql
+DB_HOST=localhost
+DB_PORT=3306
+DB_DATABASE=banking_app_prod
+DB_USERNAME=app_user
+DB_PASSWORD=secure_production_password
+
+CACHE_DRIVER=database
+SESSION_DRIVER=database
+QUEUE_CONNECTION=database
+
+LOG_CHANNEL=daily
+LOG_LEVEL=warning
+
+MAIL_MAILER=smtp
+MAIL_HOST=your-smtp-host
+MAIL_PORT=587
+MAIL_USERNAME=your-smtp-user
+MAIL_PASSWORD=your-smtp-password
+MAIL_ENCRYPTION=tls
+    \end{lstlisting}
+
+    \subsection{Digital Ocean Deployment}
+
+    \subsubsection{Konfiguracja serwera}
+
+    \textbf{nginx Configuration:}
+    \begin{lstlisting}[language=nginx, caption=Konfiguracja nginx dla aplikacji]
+server {
+    listen 80;
+    listen [::]:80;
+    server_name 209.38.233.137;
+    root /var/www/html/public;
+
+    add_header X-Frame-Options "SAMEORIGIN";
+    add_header X-Content-Type-Options "nosniff";
+
+    index index.php;
+
+    charset utf-8;
+
+    location / {
+        try_files $uri $uri/ /index.php?$query_string;
+    }
+
+    location = /favicon.ico { access_log off; log_not_found off; }
+    location = /robots.txt  { access_log off; log_not_found off; }
+
+    error_page 404 /index.php;
+
+    location ~ \.php$ {
+        fastcgi_pass unix:/var/run/php/php8.2-fpm.sock;
+        fastcgi_param SCRIPT_FILENAME $realpath_root$fastcgi_script_name;
+        include fastcgi_params;
+    }
+
+    location ~ /\.(?!well-known).* {
+        deny all;
+    }
+}
+    \end{lstlisting}
+
+    \subsubsection{Skrypt wdrożenia}
+
+    \begin{lstlisting}[language=bash, caption=Automatyczny skrypt deployment]
+#!/bin/bash
+# deploy.sh
+
+echo "Starting deployment..."
+
+# Pobierz najnowszy kod
+git pull origin main
+
+# Instaluj zależności
+composer install --optimize-autoloader --no-dev
+npm ci
+npm run build
+
+# Uruchom migracje
+php artisan migrate --force
+
+# Wyczyść i zoptymalizuj cache
+php artisan config:clear
+php artisan config:cache
+php artisan route:cache
+php artisan view:cache
+php artisan optimize
+
+# Ustaw uprawnienia
+sudo chown -R www-data:www-data storage bootstrap/cache
+sudo chmod -R 775 storage bootstrap/cache
+
+# Restart serwisów
+sudo systemctl reload nginx
+sudo systemctl reload php8.2-fpm
+
+echo "Deployment completed successfully!"
+    \end{lstlisting}
+
+    \subsection{Digital Ocean App Platform (Alternatywne)}
+
+    \subsubsection{Konfiguracja app.yaml}
+
+    Aplikacja zawiera także konfigurację do wdrożenia na Digital Ocean App Platform:
+
+    \begin{lstlisting}[language=yaml, caption=Konfiguracja .do/app.yaml]
+name: banking-app
+services:
+- name: web
+  github:
+    repo: [your-github-repo]
+    branch: main
+    deploy_on_push: true
+  build_command: |
+    npm install
+    npm run build
+    composer install --optimize-autoloader --no-dev
+  run_command: heroku-php-apache2 public/
+  envs:
+  - key: APP_ENV
+    value: production
+  - key: APP_DEBUG
+    value: false
+  - key: APP_URL
+    scope: RUN_AND_BUILD_TIME
+    value: ${APP_URL}
+  routes:
+  - path: /
+  health_check:
+    http_path: /
+    \end{lstlisting}
+
+    \section{Rozwiązywanie problemów}
+
+    \subsection{Problemy lokalne}
+
+    \subsubsection{Błędy uruchomienia}
+
+    \textbf{Problem: "php artisan serve" nie działa}
+    \begin{lstlisting}[language=bash]
+# Sprawdź wersję PHP
+php --version
+
+# Sprawdź, czy wszystkie rozszerzenia są zainstalowane
+php -m | grep -E "(pdo|mysql|mbstring|openssl)"
+
+# Regeneruj klucz aplikacji
+php artisan key:generate
+
+# Wyczyść cache
+php artisan config:clear
+php artisan cache:clear
+    \end{lstlisting}
+
+    \textbf{Problem: "npm run dev" kończy się błędem}
+    \begin{lstlisting}[language=bash]
+# Usuń node_modules i package-lock.json
+rm -rf node_modules package-lock.json
+
+# Reinstaluj pakiety
+npm install
+
+# Sprawdź wersję Node.js
+node --version  # Powinno być >= 18.0
+
+# Uruchom ponownie
+npm run dev
+    \end{lstlisting}
+
+    \textbf{Problem: Błędy bazy danych}
+    \begin{lstlisting}[language=bash]
+# Sprawdź połączenie z MySQL
+mysql -u root -p -e "SELECT 1"
+
+# Sprawdź konfigurację w .env
+cat .env | grep DB_
+
+# Przetestuj połączenie Laravel
+php artisan tinker
+>>> \DB::connection()->getPdo();
+    \end{lstlisting}
+
+    \subsubsection{Błędy konfiguracji}
+
+    \textbf{Problem: Strona wyświetla błąd 500}
+    \begin{itemize}
+        \item Sprawdź uprawnienia katalogów \texttt{storage/} i \texttt{bootstrap/cache/}
+        \item Ustaw \texttt{APP\_DEBUG=true} w \texttt{.env} dla szczegółów błędu
+        \item Sprawdź logi w \texttt{storage/logs/laravel.log}
+    \end{itemize}
+
+    \textbf{Problem: React komponenty się nie ładują}
+    \begin{itemize}
+        \item Sprawdź, czy Vite dev server działa na porcie 5173
+        \item Sprawdź konfigurację CORS w \texttt{vite.config.js}
+        \item Sprawdź console przeglądarki dla błędów JavaScript
+    \end{itemize}
+
+    \subsection{Problemy zdalne}
+
+    \subsubsection{Diagnostyka serwera produkcyjnego}
+
+    \textbf{Sprawdzanie statusu serwera:}
+    \begin{lstlisting}[language=bash]
+# Test dostępności
+ping 209.38.233.137
+
+# Test portu HTTP
+telnet 209.38.233.137 80
+
+# Test endpointu głównego
+curl -I http://209.38.233.137/
+    \end{lstlisting}
+
+    \textbf{Typowe problemy i rozwiązania:}
+    \begin{itemize}
+        \item \textbf{502 Bad Gateway:} PHP-FPM nie działa lub błędna konfiguracja nginx
+        \item \textbf{500 Internal Server Error:} Błąd aplikacji Laravel - sprawdź logi
+        \item \textbf{Connection timeout:} Serwer może być niedostępny lub przeciążony
+        \item \textbf{Brak stylów CSS:} Problem z budowaniem zasobów Vite
+    \end{itemize}
+
+    \section{Optymalizacja wydajności}
+
+    \subsection{Optymalizacje lokalne}
+
+    \begin{itemize}
+        \item Użyj \texttt{php artisan serve} zamiast Apache/nginx dla developmentu
+        \item Włącz opcaching PHP dla lepszej wydajności
+        \item Skonfiguruj Redis dla cache (opcjonalnie)
+        \item Użyj SSD dla lepszej wydajności I/O
+    \end{itemize}
+
+    \subsection{Optymalizacje produkcyjne}
+
+    \begin{itemize}
+        \item Włącz kompresję gzip w nginx
+        \item Skonfiguruj cache headers dla zasobów statycznych
+        \item Użyj CDN dla zasobów statycznych
+        \item Optymalizuj obrazy i zasoby CSS/JS
+        \item Skonfiguruj monitoring i alerty
+    \end{itemize}
+
+    \section{Bezpieczeństwo}
+
+    \subsection{Zalecenia dla środowiska lokalnego}
+
+    \begin{itemize}
+        \item Nie używaj rzeczywistych danych finansowych w developmencie
+        \item Użyj bezpiecznych haseł dla bazy danych
+        \item Nie commituj plików \texttt{.env} do repozytorium
+        \item Regularnie aktualizuj zależności
+    \end{itemize}
+
+    \subsection{Zalecenia dla środowiska produkcyjnego}
+
+    \begin{itemize}
+        \item Ustaw \texttt{APP\_DEBUG=false} w produkcji
+        \item Skonfiguruj HTTPS/SSL dla rzeczywistej aplikacji
+        \item Użyj silnych haseł dla wszystkich usług
+        \item Skonfiguruj firewall i fail2ban
+        \item Regularnie twórz kopie zapasowe bazy danych
+        \item Monitoruj logi bezpieczeństwa
+    \end{itemize}
+
+    \section{Podsumowanie}
+
+    Aplikacja bankowa może być uruchamiana w dwóch głównych trybach:
+
+    \textbf{Środowisko lokalne:}
+    \begin{itemize}
+        \item Idealne do developmentu i testowania
+        \item Wymaga \texttt{php artisan serve} + \texttt{npm run dev}
+        \item Pełna funkcjonalność z hot reload
+        \item Możliwość użycia Docker dla spójności środowiska
+    \end{itemize}
+
+    \textbf{Środowisko zdalne:}
+    \begin{itemize}
+        \item Dostępne pod adresem \url{http://209.38.233.137/}
+        \item Pełna funkcjonalność bankowa
+        \item Dane finansowe w czasie rzeczywistym
+        \item Gotowe do demonstracji i testowania
+    \end{itemize}
+
+    Oba środowiska oferują kompletną funkcjonalność systemu bankowego, umożliwiając pełne testowanie i demonstrację wszystkich zaimplementowanych zagadnień kwalifikacyjnych.
+
+\end{document}
