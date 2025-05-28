@@ -1,0 +1,402 @@
+\documentclass[12pt,a4paper]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[polish]{babel}
+\usepackage[T1]{fontenc}
+\usepackage{geometry}
+\usepackage{graphicx}
+\usepackage{amsmath}
+\usepackage{amsfonts}
+\usepackage{amssymb}
+\usepackage{enumitem}
+\usepackage{booktabs}
+\usepackage{longtable}
+\usepackage{array}
+\usepackage{xcolor}
+\usepackage{hyperref}
+\usepackage{listings}
+\usepackage{fancyhdr}
+
+\geometry{margin=2.5cm}
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{Aplikacja Bankowa - Opis funkcjonalny}
+\fancyhead[R]{\thepage}
+
+\title{\textbf{Aplikacja Bankowa}\\[0.5cm]\Large Opis funkcjonalny systemu}
+\author{Dokumentacja techniczna}
+\date{\today}
+
+\begin{document}
+
+    \maketitle
+    \thispagestyle{empty}
+
+    \newpage
+    \tableofcontents
+    \newpage
+
+    \section{Wprowadzenie}
+
+    Aplikacja Bankowa to nowoczesny system bankowości internetowej zbudowany przy użyciu technologii Laravel (backend) i React (frontend). System umożliwia użytkownikom zarządzanie kontami bankowymi, wykonywanie przelewów, śledzenie historii transakcji oraz wymianę walut. Aplikacja została zaprojektowana z myślą o bezpieczeństwie, skalowalności i łatwości użycia.
+
+    \subsection{Cel systemu}
+
+    Głównym celem systemu jest dostarczenie użytkownikom kompleksowej platformy do zarządzania finansami osobistymi, oferującej:
+    \begin{itemize}
+        \item Bezpieczny dostęp do kont bankowych
+        \item Wykonywanie różnych typów transakcji finansowych
+        \item Monitoring stanu finansów w czasie rzeczywistym
+        \item Obsługę wielu walut z automatycznym przeliczaniem
+        \item Przejrzystą historię wszystkich operacji
+    \end{itemize}
+
+    \subsection{Architektura systemu}
+
+    System został zbudowany w architekturze Model-View-Controller (MVC) z wyraźnym podziałem na:
+    \begin{itemize}
+        \item \textbf{Backend} - Laravel 12 z API RESTful
+        \item \textbf{Frontend} - React z Inertia.js dla seamless SPA experience
+        \item \textbf{Baza danych} - MySQL z pełną obsługą transakcji ACID
+        \item \textbf{Infrastruktura} - Docker dla spójnego środowiska deployment
+    \end{itemize}
+
+    \section{Moduły funkcjonalne systemu}
+
+    \subsection{Moduł uwierzytelniania i autoryzacji}
+
+    \subsubsection{Rejestracja użytkowników}
+    System umożliwia rejestrację nowych użytkowników poprzez formularz zawierający:
+    \begin{itemize}
+        \item Imię i nazwisko (walidacja: wymagane, maksymalnie 255 znaków)
+        \item Adres email (walidacja: unikalność, format email)
+        \item Hasło (walidacja: minimum 6 znaków, potwierdzenie)
+    \end{itemize}
+
+    Po pomyślnej rejestracji użytkownik otrzymuje automatycznie wygenerowany token dostępowy i zostaje przekierowany do panelu głównego.
+
+    \subsubsection{Logowanie}
+    Funkcjonalność logowania obejmuje:
+    \begin{itemize}
+        \item Uwierzytelnianie za pomocą email i hasła
+        \item Opcję "Zapamiętaj mnie" dla dłuższych sesji
+        \item Mechanizm rate limiting (5 prób na minutę)
+        \item Automatyczne generowanie tokenów API (Laravel Sanctum)
+    \end{itemize}
+
+    \subsubsection{Zarządzanie sesjami}
+    \begin{itemize}
+        \item Bezpieczne wylogowanie z invalidacją tokenów
+        \item Automatyczne przekierowanie przy próbie dostępu do chronionych zasobów
+        \item Obsługa CSRF protection dla wszystkich formulárzy
+    \end{itemize}
+
+    \subsection{Moduł zarządzania kontami bankowymi}
+
+    \subsubsection{Tworzenie kont bankowych}
+    Użytkownicy mogą tworzyć nieograniczoną liczbę kont bankowych z następującymi parametrami:
+    \begin{itemize}
+        \item \textbf{Nazwa konta} - dowolna nazwa opisowa (np. "Konto osobiste", "Oszczędności")
+        \item \textbf{Waluta} - obsługiwane waluty: PLN, EUR, USD, GBP
+        \item \textbf{Numer konta} - automatycznie generowany unikalny numer w formacie PLXXXXXXXXXXXXXXXX
+        \item \textbf{Saldo początkowe} - domyślnie 0.00
+    \end{itemize}
+
+    \subsubsection{Program bonusu powitalnego}
+    System oferuje atrakcyjny bonus powitalny dla nowych użytkowników:
+    \begin{itemize}
+        \item 1000 PLN dla pierwszego konta w złotówkach
+        \item 220 EUR dla pierwszego konta w euro
+        \item 250 USD dla pierwszego konta w dolarach
+        \item 190 GBP dla pierwszego konta w funtach
+    \end{itemize}
+
+    Bonus jest automatycznie przyznawany tylko przy tworzeniu pierwszego konta przez użytkownika i rejestrowany jako transakcja systemowa.
+
+    \subsubsection{Operacje na kontach}
+    \begin{itemize}
+        \item \textbf{Wpłaty} - możliwość doładowania konta dowolną kwotą
+        \item \textbf{Wypłaty} - wypłacanie środków z kontrolą dostępnego salda
+        \item \textbf{Dezaktywacja konta} - możliwość czasowego wyłączenia konta
+        \item \textbf{Usuwanie konta} - możliwe tylko przy saldzie równym zero i braku oczekujących transakcji
+    \end{itemize}
+
+    \subsection{Moduł transakcji}
+
+    \subsubsection{Przelewy wewnętrzne}
+    System umożliwia wykonywanie przelewów między własnymi kontami użytkownika:
+    \begin{itemize}
+        \item Wybór konta źródłowego z listy dostępnych kont
+        \item Wybór konta docelowego (różnego od źródłowego)
+        \item Wprowadzenie kwoty z walidacją dostępnych środków
+        \item Obowiązkowy tytuł przelewu
+        \item Opcjonalny opis transakcji
+    \end{itemize}
+
+    \subsubsection{Przelewy zewnętrzne}
+    Funkcjonalność przelewów na konta innych użytkowników:
+    \begin{itemize}
+        \item Wyszukiwanie konta odbiorcy po numerze konta
+        \item Wyświetlanie danych odbiorcy (nazwa konta, właściciel)
+        \item Wykonanie przelewu z pełną weryfikacją
+        \item Ochrona przed przelewami na własne konta
+    \end{itemize}
+
+    \subsubsection{System statusów transakcji}
+    Każda transakcja przechodzi przez następujące stany:
+    \begin{itemize}
+        \item \textbf{pending} - transakcja utworzona, oczekuje na przetworzenie
+        \item \textbf{completed} - transakcja pomyślnie zrealizowana
+        \item \textbf{failed} - transakcja odrzucona (np. niewystarczające środki)
+    \end{itemize}
+
+    \subsubsection{Mechanizm atomowości transakcji}
+    System gwarantuje atomowość operacji finansowych poprzez:
+    \begin{itemize}
+        \item Użycie transakcji bazodanowych (DB::beginTransaction)
+        \item Rollback w przypadku błędu na dowolnym etapie
+        \item Walidację sald przed i po operacji
+        \item Blokowanie kont podczas przetwarzania
+    \end{itemize}
+
+    \subsection{Moduł wymiany walut}
+
+    \subsubsection{Obsługa wielu walut}
+    System obsługuje cztery główne waluty z automatycznym przeliczaniem:
+    \begin{itemize}
+        \item \textbf{PLN} - Polski złoty (waluta bazowa)
+        \item \textbf{EUR} - Euro (kurs: 1 EUR = 4.55 PLN)
+        \item \textbf{USD} - Dolar amerykański (kurs: 1 USD = 4.00 PLN)
+        \item \textbf{GBP} - Funt brytyjski (kurs: 1 GBP = 5.30 PLN)
+    \end{itemize}
+
+    \subsubsection{Automatyczne przewalutowanie}
+    Przy przelewach między kontami w różnych walutach system automatycznie:
+    \begin{itemize}
+        \item Oblicza kurs wymiany na podstawie aktualnych kursów
+        \item Przelicza kwotę na walutę docelową
+        \item Zapisuje obie kwoty (źródłową i docelową) w bazie danych
+        \item Dodaje informację o przewalutowaniu do opisu transakcji
+        \item Wyświetla szczegóły przewalutowania w historii
+    \end{itemize}
+
+    \subsubsection{Wymiana walut}
+    Dedykowana funkcjonalność wymiany walut pozwala na:
+    \begin{itemize}
+        \item Przeglądanie aktualnych kursów wszystkich par walutowych
+        \item Kalkulację kwoty po przewalutowaniu przed wykonaniem operacji
+        \item Wykonanie wymiany jako specjalnej transakcji między kontami
+        \item Śledzenie wszystkich operacji walutowych w historii
+    \end{itemize}
+
+    \subsection{Moduł powiadomień}
+
+    \subsubsection{Powiadomienia email}
+    System automatycznie wysyła powiadomienia email o:
+    \begin{itemize}
+        \item Każdej wykonanej transakcji (wysyłka i odbiór)
+        \item Różnych treściach dla transakcji wychodzących i przychodzących
+        \item Szczegółowych informacjach o przewalutowaniu (jeśli dotyczy)
+        \item Numerze referencyjnym transakcji
+    \end{itemize}
+
+    \subsubsection{Konfiguracja powiadomień}
+    \begin{itemize}
+        \item Możliwość wyłączenia powiadomień poprzez konfigurację MAIL\_ENABLED
+        \item Mechanizm retry dla nieudanych wysyłek (maksymalnie 2 próby)
+        \item Logowanie statusu wysyłki w systemie
+        \item Toast notifications w interfejsie użytkownika
+    \end{itemize}
+
+    \subsection{Moduł raportowania i historii}
+
+    \subsubsection{Historia transakcji}
+    Kompleksowy system przeglądania historii transakcji obejmuje:
+    \begin{itemize}
+        \item Chronologiczną listę wszystkich transakcji użytkownika
+        \item Filtrowanie po konkretnym koncie
+        \item Oznaczenie kierunku transakcji (przychodząca/wychodząca)
+        \item Wyświetlanie kwot w odpowiednich walutach
+        \item Szczegółowe informacje o każdej transakcji
+    \end{itemize}
+
+    \subsubsection{Szczegóły transakcji}
+    Każda transakcja zawiera pełne informacje:
+    \begin{itemize}
+        \item Data i czas wykonania
+        \item Kwota źródłowa i docelowa (przy przewalutowaniu)
+        \item Kurs wymiany (jeśli dotyczy)
+        \item Dane kont uczestniczących
+        \item Tytuł i opis operacji
+        \item Unikalny numer referencyjny
+        \item Status realizacji
+    \end{itemize}
+
+    \subsection{Moduł profilu użytkownika}
+
+    \subsubsection{Zarządzanie danymi}
+    Użytkownicy mogą aktualizować:
+    \begin{itemize}
+        \item Imię i nazwisko
+        \item Adres email (z walidacją unikalności)
+        \item Hasło (z wymaganą weryfikacją obecnego hasła)
+    \end{itemize}
+
+    \subsubsection{Bezpieczeństwo profilu}
+    \begin{itemize}
+        \item Wymaganie obecnego hasła przy zmianie danych
+        \item Walidacja siły nowego hasła
+        \item Automatyczne wylogowanie po zmianie krytycznych danych
+    \end{itemize}
+
+    \section{Bezpieczeństwo systemu}
+
+    \subsection{Uwierzytelnianie i autoryzacja}
+    \begin{itemize}
+        \item \textbf{Laravel Sanctum} - nowoczesny system tokenów API
+        \item \textbf{CSRF Protection} - ochrona przed atakami Cross-Site Request Forgery
+        \item \textbf{Rate Limiting} - ograniczenie liczby prób logowania
+        \item \textbf{Password Hashing} - bcrypt z salt dla wszystkich haseł
+    \end{itemize}
+
+    \subsection{Ochrona danych}
+    \begin{itemize}
+        \item \textbf{Walidacja danych} - wszystkie dane wejściowe są walidowane
+        \item \textbf{SQL Injection Protection} - używanie Eloquent ORM
+        \item \textbf{XSS Protection} - automatyczne escapowanie danych w widokach
+        \item \textbf{Autoryzacja zasobów} - kontrola dostępu do kont i transakcji
+    \end{itemize}
+
+    \subsection{Integralność finansowa}
+    \begin{itemize}
+        \item \textbf{Transakcje ACID} - atomowość operacji finansowych
+        \item \textbf{Walidacja sald} - kontrola dostępnych środków przed operacjami
+        \item \textbf{Immutable History} - niemodyfikowalna historia transakcji
+        \item \textbf{Audit Trail} - pełny ślad wszystkich operacji
+    \end{itemize}
+
+    \section{Interfejs użytkownika}
+
+    \subsection{Responsive Design}
+    Aplikacja oferuje w pełni responsywny interfejs:
+    \begin{itemize}
+        \item Automatyczne dostosowanie do urządzeń mobilnych
+        \item Intuicyjna nawigacja na wszystkich rozdzielczościach
+        \item Optymalizacja dla urządzeń dotykowych
+        \item Czytelne formularze i tabele na małych ekranach
+    \end{itemize}
+
+    \subsection{User Experience}
+    \begin{itemize}
+        \item \textbf{Single Page Application} - płynne przejścia bez przeładowywania
+        \item \textbf{Real-time Updates} - natychmiastowe odświeżanie sald
+        \item \textbf{Loading States} - wskaźniki ładowania dla wszystkich operacji
+        \item \textbf{Error Handling} - przyjazne komunikaty błędów
+        \item \textbf{Toast Notifications} - dyskretne powiadomienia o operacjach
+    \end{itemize}
+
+    \subsection{Dostępność}
+    \begin{itemize}
+        \item Semantyczny HTML dla czytników ekranu
+        \item Odpowiedni kontrast kolorów
+        \item Keyboard navigation support
+        \item ARIA labels dla interaktywnych elementów
+    \end{itemize}
+
+    \section{Integracje zewnętrzne}
+
+    \subsection{Kursy walut}
+    System może być zintegrowany z zewnętrznymi dostawcami kursów walut:
+    \begin{itemize}
+        \item ExchangeRate-API dla aktualnych kursów
+        \item Alpha Vantage dla danych finansowych
+        \item Automatyczne cache'owanie kursów (15 minut)
+        \item Fallback na statyczne kursy przy braku połączenia
+    \end{itemize}
+
+    \subsection{Dane giełdowe}
+    Strona główna wyświetla aktualne dane z głównych giełd:
+    \begin{itemize}
+        \item NYSE (S\&P 500)
+        \item London Stock Exchange (FTSE 100)
+        \item Tokyo Stock Exchange (Nikkei 225)
+        \item Automatyczne odświeżanie co 15 minut
+    \end{itemize}
+
+    \section{Zarządzanie błędami i logowanie}
+
+    \subsection{Obsługa błędów}
+    \begin{itemize}
+        \item Centralne logowanie wszystkich błędów aplikacji
+        \item Graceful degradation przy błędach zewnętrznych serwisów
+        \item Przyjazne komunikaty błędów dla użytkowników końcowych
+        \item Automatyczny rollback transakcji przy błędach
+    \end{itemize}
+
+    \subsection{Monitoring}
+    \begin{itemize}
+        \item Logowanie wszystkich transakcji finansowych
+        \item Monitoring prób nieautoryzowanego dostępu
+        \item Śledzenie wydajności zapytań bazodanowych
+        \item Alerty przy krytycznych błędach systemowych
+    \end{itemize}
+
+    \section{Wydajność i skalowalność}
+
+    \subsection{Cache'owanie}
+    \begin{itemize}
+        \item Redis/Database cache dla często używanych danych
+        \item Cache'owanie kont użytkownika (5 minut)
+        \item Cache'owanie historii transakcji
+        \item Automatyczne invalidowanie cache przy zmianach
+    \end{itemize}
+
+    \subsection{Optymalizacja}
+    \begin{itemize}
+        \item Lazy loading relacji w Eloquent
+        \item Indeksowanie kolumn bazodanowych
+        \item Kompresja zasobów statycznych
+        \item CDN-ready asset management
+    \end{itemize}
+
+    \section{Deployment i infrastruktura}
+
+    \subsection{Konteneryzacja}
+    Aplikacja jest w pełni skonteneryzowana z użyciem Docker:
+    \begin{itemize}
+        \item Oddzielne kontenery dla aplikacji, bazy danych i cache
+        \item Docker Compose dla łatwego zarządzania środowiskiem
+        \item Wolumeny dla trwałego przechowywania danych
+        \item Skrypty automatyzujące deployment
+    \end{itemize}
+
+    \subsection{Środowiska}
+    \begin{itemize}
+        \item \textbf{Development} - lokalny Docker z hot reload
+        \item \textbf{Staging} - środowisko testowe z produkcyjnymi danymi
+        \item \textbf{Production} - zabezpieczone środowisko produkcyjne
+    \end{itemize}
+
+    \section{Podsumowanie}
+
+    Aplikacja Bankowa stanowi kompleksowe rozwiązanie dla bankowości internetowej, oferujące:
+
+    \begin{itemize}
+        \item Pełną funkcjonalność zarządzania kontami bankowymi
+        \item Bezpieczne wykonywanie transakcji finansowych
+        \item Zaawansowaną obsługę wielu walut
+        \item Intuicyjny i responsywny interfejs użytkownika
+        \item Wysokie standardy bezpieczeństwa
+        \item Skalowalną architekturę
+        \item Łatwość deployment i maintenance
+    \end{itemize}
+
+    System został zaprojektowany z myślą o przyszłej rozbudowie i może być łatwo rozszerzony o dodatkowe funkcjonalności, takie jak:
+    \begin{itemize}
+        \item Integracja z zewnętrznymi systemami płatniczymi
+        \item Zaawansowane narzędzia analityczne
+        \item Mobilna aplikacja companion
+        \item API dla partnerów biznesowych
+        \item Zaawansowane produkty finansowe (kredyty, lokaty)
+    \end{itemize}
+
+\end{document}

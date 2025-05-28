@@ -23,3 +23,20 @@ yarn-error.log
 /.zed
 node_modules/
 vendor/
+# Dokumentacja LaTeX
+docs/**/*.aux
+docs/**/*.log
+docs/**/*.toc
+docs/**/*.out
+docs/**/*.fdb_latexmk
+docs/**/*.fls
+docs/**/*.synctex.gz
+docs/**/*.bbl
+docs/**/*.blg
+docs/**/*.brf
+docs/**/*.idx
+docs/**/*.ilg
+docs/**/*.ind
+
+# Zachowaj pliki PDF w output/
+!docs/output/*.pdf

@@ -1,0 +1,674 @@
+\subsection{External APIs}
+
+\subsubsection{Financial Data Integration}
+System aktywnie korzysta z zewnętrznych API:
+
+\begin{itemize}
+    \item \textbf{Alpha Vantage API} - dane giełdowe (S\&P 500, FTSE 100, Nikkei 225)
+    \item \textbf{ExchangeRate-API} - aktualne kursy walut
+    \item \textbf{Fallback Data} - statyczne dane awaryjne przy braku połączenia
+    \item \textbf{Cache Strategy} - 15-minutowe cache'owanie odpowiedzi
+\end{itemize}
+
+\begin{lstlisting}[language=PHP, caption=Integracja z FinancialDataService]
+class FinancialDataService
+{
+    public function getStockIndices()
+    {
+        return Cache::remember('stock_indices', 900, function () {
+            // Alpha Vantage API calls
+            $spData = $this->fetchAlphaVantageGlobalQuote('SPY');
+            $ftseData = $this->fetchAlphaVantageGlobalQuote('FTSE.LON');
+            // ...
+        });
+    }
+}
+\end{lstlisting}\documentclass[12pt,a4paper]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[polish]{babel}
+\usepackage[T1]{fontenc}
+\usepackage{geometry}
+\usepackage{graphicx}
+\usepackage{amsmath}
+\usepackage{amsfonts}
+\usepackage{amssymb}
+\usepackage{enumitem}
+\usepackage{booktabs}
+\usepackage{longtable}
+\usepackage{array}
+\usepackage{xcolor}
+\usepackage{hyperref}
+\usepackage{listings}
+\usepackage{fancyhdr}
+\usepackage{tikz}
+\usetikzlibrary{positioning,arrows.meta,shapes.geometric}
+
+\geometry{margin=2.5cm}
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{Aplikacja Bankowa - Opis technologiczny}
+\fancyhead[R]{\thepage}
+
+\title{\textbf{Aplikacja Bankowa}\\[0.5cm]\Large Opis technologiczny systemu}
+\author{Dokumentacja techniczna}
+\date{\today}
+
+% Konfiguracja listingów kodu
+\lstset{
+    basicstyle=\ttfamily\footnotesize,
+    backgroundcolor=\color{gray!10},
+    frame=single,
+    breaklines=true,
+    showstringspaces=false,
+    numbers=left,
+    numberstyle=\tiny\color{gray},
+    captionpos=b
+}
+
+\begin{document}
+
+    \maketitle
+    \thispagestyle{empty}
+
+    \newpage
+    \tableofcontents
+    \newpage
+
+    \section{Wprowadzenie}
+
+    Aplikacja Bankowa została zbudowana w oparciu o nowoczesny stos technologiczny, który łączy w sobie sprawdzone rozwiązania backendowe z dynamicznym frontendem. System wykorzystuje architekturę monolityczną z wyraźnym podziałem odpowiedzialności między warstwami aplikacji, zapewniając jednocześnie wysoką wydajność i łatwość utrzymania.
+
+    \subsection{Wybór stosu technologicznego}
+
+    Decyzja o wyborze konkretnych technologii została podjęta w oparciu o następujące kryteria:
+    \begin{itemize}
+        \item \textbf{Bezpieczeństwo} - krityczne znaczenie w aplikacjach finansowych
+        \item \textbf{Skalowalność} - możliwość obsługi rosnącej liczby użytkowników
+        \item \textbf{Łatwość development} - produktywność zespołu deweloperskiego
+        \item \textbf{Ekosystem} - dostępność bibliotek i wsparcia społeczności
+        \item \textbf{Performance} - szybkość działania aplikacji
+    \end{itemize}
+
+    \section{Architektura systemu}
+
+    \subsection{Wzorzec architektoniczny}
+
+    System został zbudowany w oparciu o architekturę \textbf{Modern Monolith} z następującymi charakterystykami:
+
+    \begin{itemize}
+        \item \textbf{Single Codebase} - jedna baza kodu dla całej aplikacji
+        \item \textbf{Layered Architecture} - wyraźny podział na warstwy (prezentacji, logiki biznesowej, danych)
+        \item \textbf{SPA Frontend} - Single Page Application z React
+        \item \textbf{API-first approach} - RESTful API jako rdzeń komunikacji
+        \item \textbf{Database-centric} - relacyjna baza danych jako źródło prawdy
+        \item \textbf{Traditional Deployment} - nginx + Digital Ocean Droplet (bez konteneryzacji w produkcji)
+    \end{itemize}
+
+    \subsection{Diagram architektury}
+
+    \begin{center}
+        \begin{tikzpicture}[
+            node distance=1.5cm,
+            every node/.style={align=center},
+            box/.style={rectangle, draw, fill=blue!10, minimum width=3cm, minimum height=1cm},
+            connector/.style={->, thick}
+        ]
+
+% Frontend Layer
+            \node[box] (react) {React + Inertia.js\\Frontend};
+            \node[box, below=of react] (inertia) {Inertia.js\\Bridge};
+
+% Backend Layer
+            \node[box, below=of inertia] (laravel) {Laravel 12\\Backend};
+            \node[box, left=of laravel] (auth) {Sanctum\\Authentication};
+            \node[box, right=of laravel] (api) {RESTful\\API};
+
+% Data Layer
+            \node[box, below=of laravel] (eloquent) {Eloquent\\ORM};
+            \node[box, below=of eloquent] (mysql) {MySQL 8.0\\Database};
+
+% Infrastructure
+            \node[box, left=of mysql] (docker) {Docker\\Containers};
+            \node[box, right=of mysql] (vite) {Vite\\Build Tool};
+
+% Connections
+            \draw[connector] (react) -- (inertia);
+            \draw[connector] (inertia) -- (laravel);
+            \draw[connector] (laravel) -- (auth);
+            \draw[connector] (laravel) -- (api);
+            \draw[connector] (laravel) -- (eloquent);
+            \draw[connector] (eloquent) -- (mysql);
+            \draw[connector] (docker) -- (mysql);
+            \draw[connector] (vite) -- (react);
+
+        \end{tikzpicture}
+    \end{center}
+
+    \section{Stack technologiczny}
+
+    \subsection{Specyfikacja wersji}
+
+    System wykorzystuje następujące wersje technologii:
+
+    \begin{table}[h]
+        \centering
+        \begin{tabular}{|l|l|l|}
+            \hline
+            \textbf{Technologia} & \textbf{Wersja} & \textbf{Opis} \\
+            \hline
+            PHP & 8.2 & Język programowania backend \\
+            Laravel & 12.0 & Framework PHP \\
+            Node.js & 18+ & Runtime JavaScript (wymagany przez Vite) \\
+            React & 18.2.0 & Biblioteka frontend \\
+            Inertia.js & 2.0.0 & Most Laravel-React \\
+            MySQL & 8.0 & System bazy danych \\
+            Vite & 6.2.0 & Build tool \\
+            Tailwind CSS & 3.2.1 & Framework CSS \\
+            nginx & latest & Serwer HTTP (produkcja) \\
+            \hline
+        \end{tabular}
+        \caption{Wersje wykorzystywanych technologii}
+    \end{table}
+
+    \subsection{Backend - Laravel Framework}
+
+    \subsubsection{Laravel 12}
+    Laravel 12 stanowi rdzeń aplikacji backendowej, oferując:
+
+    \begin{itemize}
+        \item \textbf{Eloquent ORM} - zaawansowany mapper obiektowo-relacyjny
+        \item \textbf{Artisan CLI} - narzędzie command-line do zarządzania aplikacją
+        \item \textbf{Blade Templating} - system szablonów (używany minimalnie)
+        \item \textbf{Routing System} - elastyczny system routingu
+        \item \textbf{Middleware Stack} - przetwarzanie żądań HTTP
+        \item \textbf{Service Container} - dependency injection container
+    \end{itemize}
+
+    \subsubsection{Kluczowe komponenty Laravel}
+
+    \textbf{Models (Modele danych):}
+    \begin{lstlisting}[language=PHP, caption=Przykład modelu User]
+class User extends Authenticatable
+{
+    use HasApiTokens, HasFactory, Notifiable;
+
+    protected $fillable = ['name', 'email', 'password'];
+
+    public function bankAccounts(): HasMany
+    {
+        return $this->hasMany(BankAccount::class);
+    }
+}
+    \end{lstlisting}
+
+    \textbf{Controllers (Kontrolery):}
+    \begin{itemize}
+        \item \texttt{BankAccountController} - zarządzanie kontami
+        \item \texttt{TransactionController} - obsługa transakcji
+        \item \texttt{AuthenticationController} - uwierzytelnianie
+    \end{itemize}
+
+    \textbf{Middleware:}
+    \begin{itemize}
+        \item \texttt{auth:sanctum} - autoryzacja API
+        \item \texttt{cors} - Cross-Origin Resource Sharing
+        \item \texttt{csrf} - ochrona przed CSRF
+        \item \texttt{throttle} - rate limiting
+    \end{itemize}
+
+    \subsection{Frontend - React Ecosystem}
+
+    \subsubsection{React 18}
+    Biblioteka React służy do budowy interfejsu użytkownika:
+
+    \begin{itemize}
+        \item \textbf{Functional Components} - komponenty funkcyjne z hooks
+        \item \textbf{React Hooks} - useState, useEffect, custom hooks
+        \item \textbf{JSX Syntax} - declaratywny sposób opisywania UI
+        \item \textbf{Component Composition} - kompozycja komponentów
+        \item \textbf{Event Handling} - obsługa zdarzeń użytkownika
+    \end{itemize}
+
+    \subsubsection{Inertia.js - The Modern Monolith}
+    Inertia.js pełni rolę mostka między Laravel a React:
+
+    \begin{itemize}
+        \item \textbf{Server-side Routing} - wykorzystanie routingu Laravel
+        \item \textbf{No API Required} - brak konieczności budowy oddzielnego API
+        \item \textbf{SPA Experience} - płynne przejścia bez reload strony
+        \item \textbf{Props Hydration} - automatyczne przekazywanie danych z backend
+        \item \textbf{Form Handling} - uproszczona obsługa formularzy
+    \end{itemize}
+
+    \begin{lstlisting}[language=JavaScript, caption=Przykład komponentu React z Inertia]
+import { Link, useForm } from '@inertiajs/react';
+
+export default function CreateAccount() {
+    const { data, setData, post, processing } = useForm({
+        name: '',
+        currency: 'PLN'
+    });
+
+    const handleSubmit = (e) => {
+        e.preventDefault();
+        post('/api/bank-accounts');
+    };
+
+    return (
+        <form onSubmit={handleSubmit}>
+            {/* Formularz tworzenia konta */}
+        </form>
+    );
+}
+    \end{lstlisting}
+
+    \subsection{Stylizacja - Tailwind CSS}
+
+    \subsubsection{Utility-first CSS Framework}
+    Tailwind CSS zapewnia:
+
+    \begin{itemize}
+        \item \textbf{Utility Classes} - małe, pojedyncze klasy CSS
+        \item \textbf{Responsive Design} - wbudowane media queries
+        \item \textbf{Dark Mode Support} - obsługa trybu ciemnego
+        \item \textbf{Customization} - łatwa konfiguracja poprzez tailwind.config.js
+        \item \textbf{JIT Compilation} - Just-In-Time kompilacja CSS
+    \end{itemize}
+
+    \subsubsection{Headless UI Components}
+    Dodatkowo wykorzystywane są komponenty Headless UI:
+    \begin{itemize}
+        \item \texttt{Dialog} - modale i okna dialogowe
+        \item \texttt{Transition} - animacje przejść
+        \item \texttt{Menu} - rozwijane menu
+    \end{itemize}
+
+    \subsection{Build Tools - Vite}
+
+    \subsubsection{Next Generation Frontend Tooling}
+    Vite obsługuje:
+
+    \begin{itemize}
+        \item \textbf{Lightning Fast HMR} - Hot Module Replacement
+        \item \textbf{ES Modules} - natywne wsparcie dla ES modules
+        \item \textbf{TypeScript Support} - wsparcie dla TypeScript
+        \item \textbf{Asset Processing} - optymalizacja zasobów
+        \item \textbf{Code Splitting} - automatyczne dzielenie kodu
+    \end{itemize}
+
+    \begin{lstlisting}[language=JavaScript, caption=Konfiguracja Vite]
+export default defineConfig({
+    plugins: [
+        laravel({
+            input: ['resources/js/app.jsx'],
+            refresh: true,
+        }),
+        react(),
+    ],
+    server: {
+        host: '0.0.0.0',
+        port: 5173,
+        hmr: { host: 'localhost' }
+    }
+});
+    \end{lstlisting}
+
+    \section{Baza danych}
+
+    \subsection{MySQL 8.0}
+
+    \subsubsection{Charakterystyka}
+    MySQL 8.0 oferuje:
+
+    \begin{itemize}
+        \item \textbf{ACID Compliance} - atomowość, spójność, izolacja, trwałość
+        \item \textbf{InnoDB Engine} - domyślny engine z obsługą transakcji
+        \item \textbf{JSON Support} - natywne wsparcie dla dokumentów JSON
+        \item \textbf{Window Functions} - zaawansowane funkcje analityczne
+        \item \textbf{Performance Schema} - monitoring wydajności
+    \end{itemize}
+
+    \subsubsection{Schema bazy danych}
+
+    \textbf{Główne tabele:}
+    \begin{itemize}
+        \item \texttt{users} - dane użytkowników
+        \item \texttt{bank\_accounts} - konta bankowe
+        \item \texttt{transactions} - historia transakcji
+        \item \texttt{personal\_access\_tokens} - tokeny Sanctum
+    \end{itemize}
+
+    \textbf{Relacje:}
+    \begin{itemize}
+        \item User $\rightarrow$ BankAccount (1:N)
+        \item BankAccount $\rightarrow$ Transaction (1:N jako źródło)
+        \item BankAccount $\rightarrow$ Transaction (1:N jako cel)
+    \end{itemize}
+
+    \subsection{Migracje Laravel}
+
+    System wykorzystuje migracje do zarządzania schematem:
+
+    \begin{lstlisting}[language=PHP, caption=Przykład migracji]
+Schema::create('bank_accounts', function (Blueprint $table) {
+    $table->id();
+    $table->foreignId('user_id')->constrained()->onDelete('cascade');
+    $table->string('account_number')->unique();
+    $table->string('name');
+    $table->decimal('balance', 10, 2)->default(0);
+    $table->string('currency')->default('PLN');
+    $table->boolean('is_active')->default(true);
+    $table->timestamps();
+});
+    \end{lstlisting}
+
+    \section{Uwierzytelnianie i autoryzacja}
+
+    \subsection{Laravel Sanctum}
+
+    \subsubsection{API Token Authentication}
+    Sanctum zapewnia:
+
+    \begin{itemize}
+        \item \textbf{Personal Access Tokens} - tokeny dla SPA
+        \item \textbf{API Token Authentication} - uwierzytelnianie API
+        \item \textbf{Cookie Authentication} - dla first-party apps
+        \item \textbf{CSRF Protection} - ochrona przed CSRF w SPA
+    \end{itemize}
+
+    \subsubsection{Proces uwierzytelniania}
+
+    \begin{enumerate}
+        \item Użytkownik loguje się przez formularz
+        \item Laravel weryfikuje dane i tworzy sesję
+        \item Sanctum generuje token API
+        \item Token przechowywany w localStorage
+        \item Każde żądanie API zawiera token w nagłówku Authorization
+    \end{enumerate}
+
+    \subsection{Middleware Security Stack}
+
+    \begin{itemize}
+        \item \textbf{VerifyCsrfToken} - walidacja tokenów CSRF
+        \item \textbf{EncryptCookies} - szyfrowanie cookies
+        \item \textbf{TrimStrings} - normalizacja danych wejściowych
+        \item \textbf{ValidatePostSize} - walidacja rozmiaru żądań
+    \end{itemize}
+
+    \section{API Design}
+
+    \subsection{RESTful Architecture}
+
+    System implementuje zasady REST:
+
+    \begin{table}[h]
+        \centering
+        \begin{tabular}{|l|l|l|}
+            \hline
+            \textbf{Method} & \textbf{Endpoint} & \textbf{Opis} \\
+            \hline
+            GET & /api/bank-accounts & Lista kont użytkownika \\
+            POST & /api/bank-accounts & Utworzenie nowego konta \\
+            GET & /api/bank-accounts/\{id\} & Szczegóły konta \\
+            PATCH & /api/bank-accounts/\{id\} & Aktualizacja konta \\
+            DELETE & /api/bank-accounts/\{id\} & Usunięcie konta \\
+            \hline
+            POST & /api/transactions & Wykonanie transakcji \\
+            GET & /api/transactions & Historia transakcji \\
+            GET & /api/transactions/\{id\} & Szczegóły transakcji \\
+            \hline
+        \end{tabular}
+        \caption{Główne endpointy API}
+    \end{table}
+
+    \subsection{Response Format}
+
+    Standardowy format odpowiedzi API:
+
+    \begin{lstlisting}[language=JSON, caption=Format odpowiedzi API]
+{
+    "success": true,
+    "data": {
+        "id": 1,
+        "name": "Konto osobiste",
+        "balance": 1000.00,
+        "currency": "PLN"
+    },
+    "message": "Operation completed successfully"
+}
+    \end{lstlisting}
+
+    \section{Infrastruktura i deployment}
+
+    \subsection{Digital Ocean Droplet Deployment}
+
+    \subsubsection{Traditional VPS Architecture}
+    System deployowany jest na tradycyjnym VPS:
+
+    \begin{itemize}
+        \item \textbf{Digital Ocean Droplet} - Virtual Private Server
+        \item \textbf{nginx} - serwer HTTP i reverse proxy
+        \item \textbf{PHP-FPM} - FastCGI Process Manager dla PHP
+        \item \textbf{MySQL} - baza danych na tym samym serwerze
+        \item \textbf{No Docker in Production} - bezpośrednia instalacja na OS
+        \item \textbf{HTTP Only} - brak certyfikatu SSL/HTTPS
+    \end{itemize}
+
+    \subsubsection{nginx Configuration}
+
+    \begin{lstlisting}[language=nginx, caption=Przykład konfiguracji nginx]
+server {
+    listen 80;
+    server_name your-domain.com;
+    root /var/www/html/public;
+
+    index index.php index.html;
+
+    location / {
+        try_files $uri $uri/ /index.php?$query_string;
+    }
+
+    location ~ \.php$ {
+        fastcgi_pass unix:/var/run/php/php8.2-fpm.sock;
+        fastcgi_index index.php;
+        include fastcgi_params;
+    }
+}
+    \end{lstlisting}
+
+    \subsection{Docker dla Development Only}
+
+    \subsubsection{Development Environment}
+    Docker używany jest wyłącznie do lokalnego developmentu:
+
+    \begin{itemize}
+        \item \textbf{app} - PHP-FPM + Laravel aplikacja
+        \item \textbf{nginx} - serwer webowy i reverse proxy
+        \item \textbf{mysql} - baza danych MySQL
+        \item \textbf{node} - budowanie zasobów frontendowych
+        \item \textbf{phpmyadmin} - zarządzanie bazą danych
+        \item \textbf{vite} - serwer deweloperski z HMR
+    \end{itemize}
+
+    \subsection{Environment Configuration}
+
+    \subsubsection{Environment Variables}
+    Konfiguracja przez zmienne środowiskowe:
+
+    \begin{itemize}
+        \item \texttt{APP\_ENV} - środowisko aplikacji (local/production)
+        \item \texttt{APP\_DEBUG} - tryb debugowania
+        \item \texttt{DB\_*} - konfiguracja bazy danych
+        \item \texttt{MAIL\_*} - konfiguracja poczty
+        \item \texttt{CACHE\_DRIVER} - driver cache'owania
+    \end{itemize}
+
+    \subsection{Digital Ocean App Platform}
+
+    \subsubsection{VPS Deployment}
+    Aplikacja wdrożona na Digital Ocean Droplet:
+
+    \begin{itemize}
+        \item \textbf{Manual Deployment} - tradycyjne wdrażanie na VPS
+        \item \textbf{Direct Installation} - bezpośrednia instalacja na Ubuntu/Debian
+        \item \textbf{File Transfer} - deployment przez git pull lub scp
+        \item \textbf{Process Management} - zarządzanie procesami przez systemd
+        \item \textbf{No Load Balancer} - single server architecture
+        \item \textbf{HTTP Protocol} - brak szyfrowania SSL/TLS
+    \end{itemize}
+
+    \section{Performance i optymalizacja}
+
+    \subsection{Cache Strategy}
+
+    \subsubsection{Database Cache Only}
+    System implementuje uproszczoną strategię cache'owania opartą wyłącznie na bazie danych:
+
+    \begin{itemize}
+        \item \textbf{Database Cache} - cache zapytań i danych aplikacji w tabeli cache
+        \item \textbf{Session Cache} - przechowywanie sesji w bazie danych
+        \item \textbf{No Redis} - świadoma decyzja o niekorzystaniu z Redis dla uproszczenia
+        \item \textbf{Application Level} - cache na poziomie aplikacji Laravel
+    \end{itemize}
+
+    \begin{lstlisting}[language=PHP, caption=Przykład cache'owania]
+$accounts = Cache::remember('user.'.$userId.'.accounts', 300, function () use ($user) {
+    return $user->bankAccounts()->with(['transactions'])->get();
+});
+    \end{lstlisting}
+
+    \subsection{Database Optimization}
+
+    \begin{itemize}
+        \item \textbf{Indexing} - indeksy na kluczowych kolumnach
+        \item \textbf{Query Optimization} - optymalizacja zapytań Eloquent
+        \item \textbf{Lazy Loading} - ładowanie relacji na żądanie
+        \item \textbf{Connection Pooling} - pooling połączeń bazodanowych
+    \end{itemize}
+
+    \subsection{Frontend Optimization}
+
+    \begin{itemize}
+        \item \textbf{Code Splitting} - dzielenie kodu na chunki
+        \item \textbf{Tree Shaking} - usuwanie nieużywanego kodu
+        \item \textbf{Asset Minification} - minifikacja CSS/JS
+        \item \textbf{Image Optimization} - optymalizacja obrazów
+    \end{itemize}
+
+    \section{Monitoring i logowanie}
+
+    \subsection{Application Logging}
+
+    \subsubsection{Structured Logging}
+    System logowania obejmuje:
+
+    \begin{itemize}
+        \item \textbf{Error Logs} - błędy aplikacji
+        \item \textbf{Access Logs} - logi dostępu HTTP
+        \item \textbf{Transaction Logs} - logi operacji finansowych
+        \item \textbf{Security Logs} - logi bezpieczeństwa
+    \end{itemize}
+
+    \begin{lstlisting}[language=PHP, caption=Przykład logowania]
+Log::info('Transaction created', [
+    'transaction_id' => $transaction->id,
+    'user_id' => $user->id,
+    'amount' => $transaction->amount,
+    'from_account' => $transaction->from_account_id,
+    'to_account' => $transaction->to_account_id
+]);
+    \end{lstlisting}
+
+    \subsection{Error Handling}
+
+    \begin{itemize}
+        \item \textbf{Exception Handling} - centralne przechwytywanie błędów
+        \item \textbf{Graceful Degradation} - elegancka obsługa awarii
+        \item \textbf{User-friendly Messages} - przyjazne komunikaty błędów
+        \item \textbf{Debug Information} - szczegółowe informacje w trybie dev
+    \end{itemize}
+
+    \section{Security Considerations}
+
+    \subsection{Data Protection}
+
+    \begin{itemize}
+        \item \textbf{Database Encryption} - szyfrowanie wrażliwych danych w bazie
+        \item \textbf{Password Hashing} - bcrypt dla haseł użytkowników
+        \item \textbf{Token Security} - bezpieczne tokeny API Sanctum
+        \item \textbf{HTTP Only} - komunikacja bez szyfrowania SSL (development/internal use)
+        \item \textbf{Environment Variables} - wrażliwe dane w plikach .env
+    \end{itemize}
+
+    \subsection{Input Validation}
+
+    \begin{itemize}
+        \item \textbf{Form Requests} - walidacja danych wejściowych
+        \item \textbf{Eloquent Mass Assignment} - ochrona przed mass assignment
+        \item \textbf{SQL Injection Protection} - parametryzowane zapytania
+        \item \textbf{XSS Protection} - automatyczne escapowanie danych
+    \end{itemize}
+
+    \section{Development Workflow}
+
+    \subsection{Local Development}
+
+    \subsubsection{Docker Development Environment}
+    Środowisko deweloperskie oparte na Docker (różne od produkcji):
+
+    \begin{enumerate}
+        \item Clone repozytorium
+        \item Uruchomienie \texttt{./start.sh} lub \texttt{start.cmd}
+        \item Automatyczna konfiguracja kontenerów Docker
+        \item Hot reload dla development z Vite
+        \item Dostęp przez http://localhost:8000
+    \end{enumerate}
+
+    \subsubsection{Production Deployment}
+    Deployment na Digital Ocean Droplet:
+
+    \begin{enumerate}
+        \item Konfiguracja VPS z nginx + PHP-FPM + MySQL
+        \item Git pull lub transfer plików
+        \item Composer install na serwerze
+        \item npm run build dla zasobów frontend
+        \item Migracje bazy danych
+        \item Restart nginx/php-fpm
+    \end{enumerate}
+
+    \subsection{Code Quality}
+
+    \begin{itemize}
+        \item \textbf{PSR Standards} - przestrzeganie standardów PHP
+        \item \textbf{ESLint/Prettier} - formatowanie kodu JavaScript
+        \item \textbf{Git Hooks} - automatyczne sprawdzenia przed commit
+    \end{itemize}
+
+    \section{Podsumowanie technologiczne}
+
+    Aplikacja Bankowa została zbudowana w oparciu o starannie dobrany stos technologiczny, który zapewnia:
+
+    \subsection{Kluczowe zalety architektury}
+
+    \begin{itemize}
+        \item \textbf{Bezpieczeństwo} - wielowarstwowa ochrona danych finansowych
+        \item \textbf{Wydajność} - optymalizacja na każdym poziomie stosu
+        \item \textbf{Skalowalność} - możliwość łatwego rozszerzania funkcjonalności
+        \item \textbf{Utrzymywalność} - czytelna architektura i dokumentacja
+        \item \textbf{Developer Experience} - nowoczesne narzędzia deweloperskie
+    \end{itemize}
+
+    \subsection{Możliwości rozbudowy}
+
+    Architektura systemu pozwala na łatwe dodanie:
+    \begin{itemize}
+        \item Mikroservices (podział monolitu)
+        \item Message Queues (Redis/RabbitMQ)
+        \item External APIs (płatności, weryfikacja)
+        \item Mobile Applications (React Native)
+        \item Advanced Analytics (data warehouse)
+    \end{itemize}
+
+    Wybrane technologie stanowią solidną podstawę dla dalszego rozwoju aplikacji i implementacji zaawansowanych funkcjonalności bankowych.
+
+\end{document}

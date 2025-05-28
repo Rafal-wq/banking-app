@@ -1,182 +1,111 @@
-# Aplikacja Bankowa
+# Dokumentacja projektu Bank App
 
-Nowoczesna aplikacja bankowości internetowej zbudowana przy użyciu Laravel i React, oferująca podstawowe usługi bankowe, w tym zarządzanie kontami, przelewy i śledzenie historii transakcji.
+Ten katalog zawiera kompletną dokumentację techniczną i użytkownika dla aplikacji bankowej.
 
-## Funkcje
+## Struktura dokumentacji
 
-- **Uwierzytelnianie Użytkowników**: Bezpieczne logowanie, rejestracja i odzyskiwanie hasła
-- **Zarządzanie Kontami**: Tworzenie i zarządzanie wieloma kontami bankowymi w różnych walutach
-- **Operacje Finansowe**: Wpłaty i wypłaty środków z kont
-- **Przelewy**: Przesyłanie pieniędzy między kontami z historią transakcji
-- **Aktualizacje Salda w Czasie Rzeczywistym**: Natychmiastowy podgląd zmian salda po transakcjach
-- **Obsługa Wielu Walut**: Obsługa kont w PLN, EUR, USD i GBP
+```
+docs/
+├── technical/              # Dokumentacja techniczna
+│   ├── functional-description.tex    # Opis funkcjonalny systemu
+│   ├── api-documentation.tex         # Dokumentacja API (planowane)
+│   ├── database-schema.tex           # Schemat bazy danych (planowane)
+│   └── deployment-guide.tex          # Przewodnik wdrożenia (planowane)
+├── user/                   # Dokumentacja użytkownika
+│   └── user-manual.tex               # Instrukcja użytkownika (planowane)
+├── images/                 # Zasoby graficzne
+├── output/                 # Skompilowane pliki PDF
+└── README.md              # Ten plik
+```
 
-## Technologie
+## Kompilacja dokumentacji
 
-### Backend
-- **Laravel 12**: Framework PHP do solidnego rozwoju backendu
-- **Sanctum**: System uwierzytelniania API
-- **MySQL/SQLite**: Przechowywanie danych
-- **Eloquent ORM**: Mapowanie obiektowo-relacyjne bazy danych
+### Wymagania
+- LaTeX (TeX Live, MiKTeX lub podobna dystrybucja)
+- pdflatex
+- Polskie pakiety językowe
 
-### Frontend
-- **React**: Biblioteka frontendowa do budowania interfejsów użytkownika
-- **Inertia.js**: Łączy Laravel i React bez konieczności budowania oddzielnego API
-- **Tailwind CSS**: Framework CSS typu utility-first do stylizacji
-- **Headless UI**: Dostępne komponenty UI bez stylizacji
+### Instalacja LaTeX
 
-## Wymagania Systemowe
+**Windows:**
+```bash
+# Zainstaluj MiKTeX z https://miktex.org/
+# Lub przez Chocolatey:
+choco install miktex
+```
 
-- PHP 8.2 lub wyższy
-- Composer
-- Node.js i npm
-- Baza danych (MySQL, PostgreSQL lub SQLite)
+**macOS:**
+```bash
+# Zainstaluj MacTeX z https://www.tug.org/mactex/
+# Lub przez Homebrew:
+brew install --cask mactex
+```
 
-## Instalacja
+**Ubuntu/Debian:**
+```bash
+sudo apt-get install texlive-full
+sudo apt-get install texlive-lang-polish
+```
 
-1. **Klonowanie repozytorium**
+### Kompilacja ręczna
 
 ```bash
-git clone https://github.com/twoj-username/aplikacja-bankowa.git
-cd aplikacja-bankowa
+# Przejdź do katalogu z dokumentacją
+cd docs/technical
+
+# Kompiluj dokument
+pdflatex functional-description.tex
+pdflatex functional-description.tex  # Druga kompilacja dla ToC
+
+# Przenieś PDF do katalogu output
+mv functional-description.pdf ../output/
 ```
 
-2. **Instalacja zależności PHP**
+### Automatyczna kompilacja (Makefile)
+
+Użyj dołączonego Makefile:
 
 ```bash
-composer install
+# Kompiluj wszystkie dokumenty
+make all
+
+# Kompiluj konkretny dokument
+make functional-description
+
+# Wyczyść pliki tymczasowe
+make clean
+
+# Wyczyść wszystko włącznie z PDF
+make cleanall
 ```
 
-3. **Instalacja zależności JavaScript**
+## Dodawanie nowej dokumentacji
 
-```bash
-npm install
-```
+1. Utwórz nowy plik `.tex` w odpowiednim katalogu
+2. Użyj szablonu z istniejących dokumentów
+3. Dodaj nowy target do Makefile
+4. Zaktualizuj ten README
 
-4. **Konfiguracja środowiska**
+## Konwencje
 
-```bash
-cp .env.example .env
-php artisan key:generate
-```
+### Nazewnictwo plików
+- Używaj kebab-case: `my-document.tex`
+- Opisowe nazwy: `api-documentation.tex`
+- Rozszerzenie `.tex` dla źródeł
 
-5. **Konfiguracja bazy danych**
+### Język
+- Dokumentacja techniczna: polski
+- Komentarze w kodzie LaTeX: polski
+- Nazwy plików i katalogów: angielski
 
-Edytuj plik `.env` i ustaw dane połączenia z bazą danych:
+### Formatowanie
+- Encoding: UTF-8
+- Font size: 12pt
+- Paper: A4
+- Margins: 2.5cm
 
-```
-DB_CONNECTION=sqlite
-# Lub użyj ustawień MySQL/PostgreSQL
-# DB_CONNECTION=mysql
-# DB_HOST=127.0.0.1
-# DB_PORT=3306
-# DB_DATABASE=laravel
-# DB_USERNAME=root
-# DB_PASSWORD=
-```
+## Przydatne linki
 
-6. **Uruchomienie migracji i seedów**
-
-```bash
-php artisan migrate --seed
-```
-
-7. **Uruchomienie serwerów programistycznych**
-
-```bash
-# Terminal 1: Serwer Laravel
-php artisan serve
-
-# Terminal 2: Serwer programistyczny Vite
-npm run dev
-```
-
-## Użytkowanie
-
-Po instalacji, dostęp do aplikacji jest możliwy pod adresem `http://localhost:8000`.
-
-### Domyślny Użytkownik Testowy
-- Email: test@example.com
-- Hasło: password
-
-## Endpointy API
-
-Aplikacja udostępnia API RESTful do operacji bankowych:
-
-### Uwierzytelnianie
-- `POST /api/login`: Uwierzytelnienie użytkownika
-- `POST /api/register`: Rejestracja nowego użytkownika
-- `POST /api/logout`: Wylogowanie bieżącego użytkownika
-
-### Konta Bankowe
-- `GET /api/bank-accounts`: Lista kont bankowych użytkownika
-- `POST /api/bank-accounts`: Utworzenie nowego konta bankowego
-- `GET /api/bank-accounts/{id}`: Podgląd konkretnego konta bankowego
-- `PATCH /api/bank-accounts/{id}`: Aktualizacja konta bankowego
-- `DELETE /api/bank-accounts/{id}`: Usunięcie konta bankowego
-- `POST /api/bank-accounts/{id}/deposit`: Wpłata pieniędzy
-- `POST /api/bank-accounts/{id}/withdraw`: Wypłata pieniędzy
-
-### Transakcje
-- `GET /api/transactions`: Lista transakcji użytkownika
-- `POST /api/transactions`: Utworzenie nowej transakcji
-- `GET /api/transactions/{id}`: Podgląd konkretnej transakcji
-- `GET /api/bank-accounts/{id}/transactions`: Pobieranie transakcji dla konta
-
-## Struktura Projektu
-
-```
-app/
-├── Http/
-│   ├── Controllers/         # Kontrolery API i web
-│   ├── Middleware/          # Middleware aplikacji
-│   └── Requests/            # Klasy walidacji formularzy
-├── Models/                  # Modele Eloquent
-│   ├── User.php
-│   ├── BankAccount.php
-│   └── Transaction.php
-database/
-├── migrations/              # Migracje bazy danych
-└── seeders/                 # Seedy bazy danych
-resources/
-├── js/                      # Komponenty frontendowe React
-│   ├── Pages/               # Komponenty stron
-│   └── Components/          # Komponenty wielokrotnego użytku
-routes/
-├── api.php                  # Trasy API
-└── web.php                  # Trasy webowe
-```
-
-## Testowanie
-
-Aplikacja zawiera kompleksowy zestaw testów:
-
-```bash
-# Uruchomienie wszystkich testów
-php artisan test
-
-# Uruchomienie konkretnego testu
-php artisan test --filter BankApiTest
-```
-
-## Aspekty Bezpieczeństwa
-
-- Wszystkie endpointy API są chronione uwierzytelnianiem Sanctum
-- Haszowanie haseł za pomocą bcrypt
-- Ochrona CSRF dla tras webowych
-- Walidacja danych wejściowych dla wszystkich żądań
-- Kontrola uprawnień dla operacji na kontach i transakcjach
-
-## Planowane Udoskonalenia
-
-- Wyciągi z konta i eksporty
-- Przelewy planowane
-- Przelewy międzynarodowe
-- Integracja z aplikacją mobilną
-- Uwierzytelnianie dwuskładnikowe
-- Panel administracyjny
-- Integracje płatności
-
-## Licencja
-
-Ten projekt jest oprogramowaniem open-source na licencji MIT.
+- [LaTeX Documentation](https://www.latex-project.org/help/documentation/)
+- [Polish LaTeX Guide](http://www.gust.org.pl/)
+- [Overleaf LaTeX Tutorial](https://www.overleaf.com/learn)
