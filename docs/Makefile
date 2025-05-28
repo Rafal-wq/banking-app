@@ -51,6 +51,12 @@ technical-architecture: $(OUTPUT_DIR)/technical-architecture.pdf
 .PHONY: implementation-analysis
 implementation-analysis: $(OUTPUT_DIR)/implementation-analysis.pdf
 
+.PHONY: wnioski-projektowe
+wnioski-projektowe: $(OUTPUT_DIR)/wnioski-projektowe.pdf
+
+.PHONY: deployment-guide
+deployment-guide: $(OUTPUT_DIR)/deployment-guide.pdf
+
 .PHONY: api-docs
 api-docs: $(OUTPUT_DIR)/api-documentation.pdf
 
@@ -88,6 +94,8 @@ help:
 	@echo "  make functional-description  - Kompiluj opis funkcjonalny"
 	@echo "  make technical-architecture  - Kompiluj opis technologiczny"
 	@echo "  make implementation-analysis - Kompiluj analizę implementacji"
+	@echo "  make wnioski-projektowe      - Kompiluj wnioski projektowe"
+	@echo "  make deployment-guide        - Kompiluj przewodnik wdrożenia"
 	@echo "  make api-docs               - Kompiluj dokumentację API"
 	@echo "  make database-schema        - Kompiluj schemat bazy danych"
 	@echo "  make user-manual            - Kompiluj instrukcję użytkownika"

@@ -10,9 +10,10 @@ docs/
 │   ├── functional-description.tex    # Opis funkcjonalny systemu
 │   ├── technical-architecture.tex    # Opis technologiczny systemu
 │   ├── implementation-analysis.tex   # Analiza implementacji zagadnień kwalifikacyjnych
+│   ├── wnioski-projektowe.tex        # Wnioski projektowe
 │   ├── api-documentation.tex         # Dokumentacja API (planowane)
 │   ├── database-schema.tex           # Schemat bazy danych (planowane)
-│   ├── deployment-guide.tex           # Przewodnik wdrożenia i uruchomienia systemu
+│   ├── deployment-guide.tex          # Przewodnik wdrożenia i uruchomienia systemu
 ├── user/                             # Dokumentacja użytkownika
 │   └── user-manual.tex               # Instrukcja użytkownika (planowane)
 ├── images/                           # Zasoby graficzne
@@ -20,6 +21,7 @@ docs/
 │   ├── functional-description.pdf    # ✓ Dostępny
 │   ├── technical-architecture.pdf    # ✓ Dostępny
 │   ├── implementation-analysis.pdf   # ✓ Dostępny
+│   ├── wnioski-projektowe.pdf        # ✓ Dostępny
 │   └── deployment-guide.pdf          # ✓ Dostępny
 ├── Makefile                          # Automatyzacja kompilacji
 └── README.md                         # Ten plik
@@ -47,11 +49,14 @@ docs/
     - Uwierzytelnianie, mailing, formularze
     - RWD, logger, deployment i więcej
 
-4. **Przewodnik wdrożenia i uruchomienia systemu** (`deployment-guide.tex`)
-    - Instrukcja uruchomienia lokalnego (php artisan serve + npm run dev)
-    - Dostęp do aplikacji zdalnej (http://209.38.233.137/)
-    - Konfiguracja środowisk deweloperskiego i produkcyjnego
-    - Rozwiązywanie problemów i optymalizacja wdrożenia i uruchomienia systemu** (`deployment-guide.tex`)
+4. **Wnioski projektowe** (`wnioski-projektowe.tex`)
+    - Podsumowanie realizacji celów projektowych
+    - Analiza wyborów technologicznych i architektonicznych
+    - Lekcje wyniesione z projektu
+    - Rekomendacje dla przyszłych projektów
+    - Możliwości dalszego rozwoju systemu
+
+5. **Przewodnik wdrożenia i uruchomienia systemu** (`deployment-guide.tex`)
     - Instrukcja uruchomienia lokalnego (php artisan serve + npm run dev)
     - Dostęp do aplikacji zdalnej (http://209.38.233.137/)
     - Konfiguracja środowisk deweloperskiego i produkcyjnego
@@ -61,7 +66,6 @@ docs/
 
 - **Dokumentacja API** - szczegółowy opis endpointów REST API
 - **Schemat bazy danych** - diagramy ERD i opis tabel
-- **Przewodnik wdrożenia** - instrukcje deployment na różne środowiska
 - **Instrukcja użytkownika** - przewodnik dla końcowych użytkowników
 
 ## Kompilacja dokumentacji
@@ -119,6 +123,8 @@ make all
 make functional-description
 make technical-architecture
 make implementation-analysis
+make wnioski-projektowe
+make deployment-guide
 
 # Sprawdź dostępne komendy
 make help
@@ -138,8 +144,9 @@ make cleanall
 | `make functional-description` | Kompiluj opis funkcjonalny |
 | `make technical-architecture` | Kompiluj opis technologiczny |
 | `make implementation-analysis` | Kompiluj analizę implementacji |
-| `make api-docs` | Kompiluj dokumentację API |
+| `make wnioski-projektowe` | Kompiluj wnioski projektowe |
 | `make deployment-guide` | Kompiluj przewodnik wdrożenia |
+| `make api-docs` | Kompiluj dokumentację API |
 | `make database-schema` | Kompiluj schemat bazy danych |
 | `make user-manual` | Kompiluj instrukcję użytkownika |
 | `make clean` | Usuń pliki tymczasowe |
@@ -176,7 +183,7 @@ make cleanall
 
 ### Nazewnictwo plików
 - Używaj kebab-case: `my-document.tex`
-- Opisowe nazwy: `api-documentation.tex`
+- Opisowe nazwy: `wnioski-projektowe.tex`
 - Rozszerzenie `.tex` dla źródeł LaTeX
 
 ### Język i format
@@ -218,6 +225,7 @@ make cleanall
 | functional-description.pdf | ✅ Kompiluje | - |
 | technical-architecture.pdf | ✅ Kompiluje | - |
 | implementation-analysis.pdf | ✅ Kompiluje | - |
+| wnioski-projektowe.pdf | ✅ Kompiluje | - |
 | deployment-guide.pdf | ✅ Kompiluje | - |
 | api-documentation.pdf | ⏳ Planowane | - |
 | database-schema.pdf | ⏳ Planowane | - |
