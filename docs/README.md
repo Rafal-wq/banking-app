@@ -31,7 +31,7 @@ docs/
 
 ## 🎯 Główna dokumentacja
 
-### **main.pdf** - Kompletna dokumentacja do oddania
+### **main.pdf** 
 
 1. **Opis funkcjonalny systemu** - kompletny opis funkcjonalności
 2. **Opis technologiczny** - architektura i stack technologiczny
@@ -155,24 +155,9 @@ mv main.pdf output/
 
 ## 🔄 Workflow dokumentacji
 
-### Do oddania projektów/prac (ZALECANE)
 ```bash
 make full-documentation
 ```
-
-### Do pracy zespołowej/modularnej
-```bash
-make all
-```
-
-### Do development/debugowania
-```bash
-make clean
-make full-documentation
-# Sprawdź: output/main.pdf
-```
-
-
 
 ### Struktura dokumentu
 ```latex
