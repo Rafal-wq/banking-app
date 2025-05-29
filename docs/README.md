@@ -9,17 +9,12 @@ docs/
 ├── main.tex                          # ✨ GŁÓWNY PLIK - kompletna dokumentacja w jednym pliku
 ├── Makefile                          # Automatyzacja kompilacji
 ├── output/                           # Skompilowane pliki PDF
-│   ├── main.pdf                      # 🎯 KOMPLETNA DOKUMENTACJA (zalecane do oddania)
-│   ├── functional-description.pdf    # ✓ Dostępny
-│   ├── technical-architecture.pdf    # ✓ Dostępny
-│   ├── implementation-analysis.pdf   # ✓ Dostępny
-│   ├── project-conclusions.pdf       # ✓ Dostępny (przemianowany)
-│   └── deployment-guide.pdf          # ✓ Dostępny
+│   ├── main.pdf                      # 🎯 KOMPLETNA DOKUMENTACJA
 ├── technical/                        # Dokumentacja techniczna (modularna)
 │   ├── functional-description.tex    # Opis funkcjonalny systemu
 │   ├── technical-architecture.tex    # Opis technologiczny systemu
 │   ├── implementation-analysis.tex   # Analiza implementacji zagadnień kwalifikacyjnych
-│   ├── project-conclusions.tex       # Wnioski projektowe (przemianowany)
+│   ├── project-conclusions.tex       # Wnioski projektowe
 │   ├── deployment-guide.tex          # Przewodnik wdrożenia i uruchomienia systemu
 │   ├── api-documentation.tex         # Dokumentacja API (planowane)
 │   └── database-schema.tex           # Schemat bazy danych (planowane)
