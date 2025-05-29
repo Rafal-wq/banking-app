@@ -33,8 +33,6 @@ docs/
 
 ### **main.pdf** - Kompletna dokumentacja do oddania
 
-**ZALECANE:** Używaj `main.pdf` do oddania - zawiera wszystkie sekcje w jednym profesjonalnym dokumencie:
-
 1. **Opis funkcjonalny systemu** - kompletny opis funkcjonalności
 2. **Opis technologiczny** - architektura i stack technologiczny
 3. **Wdrożone zagadnienia kwalifikacyjne** - wszystkie 18 zagadnień z przykładami
@@ -360,4 +358,3 @@ xdg-open output/main.pdf  # Linux
 start output/main.pdf  # Windows
 ```
 
-**Gotowe! 🎉** Masz kompletną dokumentację w `output/main.pdf` gotową do oddania.
