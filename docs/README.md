@@ -43,7 +43,6 @@ docs/
 # Skompiluj główną dokumentację
 make full-documentation
 
-# Rezultat: output/main.pdf - gotowe do oddania! 🚀
 ```
 
 ## 📚 Dokumentacja modularna
@@ -119,21 +118,10 @@ sudo apt-get install texlive-lang-polish
 ### Kompilacja z Makefile (ZALECANA)
 
 ```bash
-# 🎯 GŁÓWNA DOKUMENTACJA (do oddania)
+# 🎯 GŁÓWNA DOKUMENTACJA
 make full-documentation
 # Rezultat: output/main.pdf
 
-# Sprawdź dostępne komendy
-make help
-
-# Kompiluj wszystkie dokumenty modularnie
-make all
-
-# Wyczyść pliki tymczasowe
-make clean
-
-# Wyczyść wszystko włącznie z PDF
-make cleanall
 ```
 
 ### Kompilacja ręczna
@@ -144,11 +132,6 @@ pdflatex main.tex
 pdflatex main.tex  # Druga kompilacja dla ToC
 mv main.pdf output/
 
-# Lub konkretny dokument modularny
-cd technical/
-pdflatex functional-description.tex
-pdflatex functional-description.tex
-mv functional-description.pdf ../output/
 ```
 
 ### Dostępne komendy Makefile
@@ -175,14 +158,11 @@ mv functional-description.pdf ../output/
 ### Do oddania projektów/prac (ZALECANE)
 ```bash
 make full-documentation
-# Oddaj: output/main.pdf
 ```
 
 ### Do pracy zespołowej/modularnej
 ```bash
 make all
-# Edytuj: technical/*.tex
-# Kompiluj: make [konkretny-dokument]
 ```
 
 ### Do development/debugowania
@@ -192,63 +172,7 @@ make full-documentation
 # Sprawdź: output/main.pdf
 ```
 
-## 📝 Zmiany w strukturze
 
-### Co się zmieniło?
-
-1. **➕ Dodany `main.tex`** - główny plik z kompletną dokumentacją
-2. **🔄 Przemianowany plik** - `wnioski-projektowe.tex` → `project-conclusions.tex` (spójność nazewnictwa)
-3. **⚡ Zaktualizowany Makefile** - nowy cel `make full-documentation`
-4. **📖 Nowy workflow** - główna dokumentacja + opcjonalne moduły
-
-### Dlaczego te zmiany?
-
-- **Profesjonalny wygląd** - jeden dokument do oddania
-- **Spójność** - wszystko w jednym pliku z ciągłą numeracją
-- **Łatwość oceny** - jeden PDF zamiast pięciu osobnych
-- **Zachowana modularność** - możliwość edycji pojedynczych sekcji
-
-## Dodawanie nowej dokumentacji
-
-1. Utwórz nowy plik `.tex` w odpowiednim katalogu:
-    - `technical/` - dla dokumentacji technicznej
-    - `user/` - dla dokumentacji użytkownika
-
-2. Użyj szablonu z istniejących dokumentów jako wzór
-
-3. **Dla dokumentacji modularnej** - dodaj nowy target do `Makefile`:
-   ```makefile
-   .PHONY: new-document
-   new-document: $(OUTPUT_DIR)/new-document.pdf
-   ```
-
-4. **Dla głównej dokumentacji** - dodaj sekcję do `main.tex`:
-   ```latex
-   \section{Nowa sekcja}
-   % Zawartość lub \input{sections/new-section.tex}
-   ```
-
-5. Zaktualizuj ten `README.md`
-
-6. Przetestuj kompilację:
-   ```bash
-   make new-document  # dla modularnej
-   make full-documentation  # dla głównej
-   ```
-
-## Konwencje dokumentacji
-
-### Nazewnictwo plików
-- **Modułowe**: kebab-case `my-document.tex`
-- **Główny plik**: `main.tex`
-- **Język nazw**: angielski (spójność techniczna)
-- **Encoding**: UTF-8
-
-### Język i format
-- **Treść dokumentacji**: polski
-- **Komentarze w LaTeX**: polski
-- **Nazwy plików**: angielski
-- **Font size**: 12pt, **Paper**: A4, **Margins**: 2.5cm
 
 ### Struktura dokumentu
 ```latex
@@ -339,22 +263,3 @@ mv main.pdf output/
 # Lub sprawdź szczegóły błędu
 cat main.log
 ```
-
-## 🚀 Quick Start
-
-```bash
-# 1. Sklonuj repozytorium i przejdź do docs/
-cd docs/
-
-# 2. Sprawdź zależności
-make check-deps
-
-# 3. Kompiluj główną dokumentację
-make full-documentation
-
-# 4. Otwórz rezultat
-open output/main.pdf  # macOS
-xdg-open output/main.pdf  # Linux
-start output/main.pdf  # Windows
-```
-
