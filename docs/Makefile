@@ -29,7 +29,7 @@ $(OUTPUT_DIR)/%.pdf: $(TECH_DIR)/%.tex | $(OUTPUT_DIR)
 	mv $(TECH_DIR)/$(notdir $(@:.pdf=.pdf)) $@
 	@echo "✓ Utworzono $@"
 
-# Kompilacja dokumentów użytkownika
+# Kompilacja dokumentów użytkownika (jeśli katalog istnieje)
 $(OUTPUT_DIR)/%.pdf: $(USER_DIR)/%.tex | $(OUTPUT_DIR)
 	@echo "Kompilowanie $<..."
 	cd $(USER_DIR) && pdflatex -interaction=nonstopmode $(notdir $<)
@@ -41,7 +41,18 @@ $(OUTPUT_DIR)/%.pdf: $(USER_DIR)/%.tex | $(OUTPUT_DIR)
 $(OUTPUT_DIR):
 	mkdir -p $(OUTPUT_DIR)
 
-# Konkretne dokumenty
+# Kompletna dokumentacja w jednym pliku
+.PHONY: full-documentation
+full-documentation: $(OUTPUT_DIR)/main.pdf
+
+$(OUTPUT_DIR)/main.pdf: main.tex | $(OUTPUT_DIR)
+	@echo "Kompilowanie kompletnej dokumentacji..."
+	pdflatex -interaction=nonstopmode main.tex
+	pdflatex -interaction=nonstopmode main.tex
+	mv main.pdf $(OUTPUT_DIR)/
+	@echo "✓ Utworzono $(OUTPUT_DIR)/main.pdf - kompletna dokumentacja aplikacji bankowej"
+
+# Konkretne dokumenty (zachowujemy dla kompatybilności)
 .PHONY: functional-description
 functional-description: $(OUTPUT_DIR)/functional-description.pdf
 
@@ -51,8 +62,8 @@ technical-architecture: $(OUTPUT_DIR)/technical-architecture.pdf
 .PHONY: implementation-analysis
 implementation-analysis: $(OUTPUT_DIR)/implementation-analysis.pdf
 
-.PHONY: wnioski-projektowe
-wnioski-projektowe: $(OUTPUT_DIR)/wnioski-projektowe.pdf
+.PHONY: project-conclusions
+project-conclusions: $(OUTPUT_DIR)/project-conclusions.pdf
 
 .PHONY: deployment-guide
 deployment-guide: $(OUTPUT_DIR)/deployment-guide.pdf
@@ -70,13 +81,26 @@ user-manual: $(OUTPUT_DIR)/user-manual.pdf
 .PHONY: clean
 clean:
 	@echo "Czyszczenie plików tymczasowych..."
-	find $(TECH_DIR) $(USER_DIR) -name "*.aux" -delete
-	find $(TECH_DIR) $(USER_DIR) -name "*.log" -delete
-	find $(TECH_DIR) $(USER_DIR) -name "*.toc" -delete
-	find $(TECH_DIR) $(USER_DIR) -name "*.out" -delete
-	find $(TECH_DIR) $(USER_DIR) -name "*.fdb_latexmk" -delete
-	find $(TECH_DIR) $(USER_DIR) -name "*.fls" -delete
-	find $(TECH_DIR) $(USER_DIR) -name "*.synctex.gz" -delete
+	# Czyść katalog technical (zawsze istnieje)
+	find $(TECH_DIR) -name "*.aux" -delete 2>/dev/null || true
+	find $(TECH_DIR) -name "*.log" -delete 2>/dev/null || true
+	find $(TECH_DIR) -name "*.toc" -delete 2>/dev/null || true
+	find $(TECH_DIR) -name "*.out" -delete 2>/dev/null || true
+	find $(TECH_DIR) -name "*.fdb_latexmk" -delete 2>/dev/null || true
+	find $(TECH_DIR) -name "*.fls" -delete 2>/dev/null || true
+	find $(TECH_DIR) -name "*.synctex.gz" -delete 2>/dev/null || true
+	# Czyść katalog user (jeśli istnieje)
+	@if [ -d "$(USER_DIR)" ]; then \
+		find $(USER_DIR) -name "*.aux" -delete 2>/dev/null || true; \
+		find $(USER_DIR) -name "*.log" -delete 2>/dev/null || true; \
+		find $(USER_DIR) -name "*.toc" -delete 2>/dev/null || true; \
+		find $(USER_DIR) -name "*.out" -delete 2>/dev/null || true; \
+		find $(USER_DIR) -name "*.fdb_latexmk" -delete 2>/dev/null || true; \
+		find $(USER_DIR) -name "*.fls" -delete 2>/dev/null || true; \
+		find $(USER_DIR) -name "*.synctex.gz" -delete 2>/dev/null || true; \
+	fi
+	# Czyszczenie plików tymczasowych dla main.tex
+	rm -f main.aux main.log main.toc main.out main.fdb_latexmk main.fls main.synctex.gz
 	@echo "✓ Pliki tymczasowe wyczyszczone"
 
 # Czyszczenie wszystkiego
@@ -90,11 +114,12 @@ cleanall: clean
 .PHONY: help
 help:
 	@echo "Dostępne komendy:"
-	@echo "  make all                     - Kompiluj wszystkie dokumenty"
+	@echo "  make all                     - Kompiluj wszystkie dokumenty (oddzielnie)"
+	@echo "  make full-documentation      - Kompiluj kompletną dokumentację w jednym pliku"
 	@echo "  make functional-description  - Kompiluj opis funkcjonalny"
 	@echo "  make technical-architecture  - Kompiluj opis technologiczny"
 	@echo "  make implementation-analysis - Kompiluj analizę implementacji"
-	@echo "  make wnioski-projektowe      - Kompiluj wnioski projektowe"
+	@echo "  make project-conclusions     - Kompiluj wnioski projektowe"
 	@echo "  make deployment-guide        - Kompiluj przewodnik wdrożenia"
 	@echo "  make api-docs               - Kompiluj dokumentację API"
 	@echo "  make database-schema        - Kompiluj schemat bazy danych"
@@ -102,6 +127,8 @@ help:
 	@echo "  make clean                  - Usuń pliki tymczasowe"
 	@echo "  make cleanall               - Usuń wszystkie wygenerowane pliki"
 	@echo "  make help                   - Pokaż tę pomoc"
+	@echo ""
+	@echo "ZALECANE: Użyj 'make full-documentation' dla kompletnej dokumentacji do oddania"
 
 # Sprawdzenie zależności
 .PHONY: check-deps

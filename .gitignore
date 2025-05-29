@@ -40,3 +40,7 @@ docs/**/*.ind
 
 # Zachowaj pliki PDF w output/
 !docs/output/*.pdf
+
+docs/technical/*.pdf
+docs/output/*.pdf
+!docs/output/main.pdf
